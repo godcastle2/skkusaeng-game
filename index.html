@@ -129,8 +129,8 @@ let items = []; // {x,y,sz,speed,type}
 let player = { 
   x: W/2, 
   y: H - H*0.18, 
-  w: Math.min(120, W*0.15), 
-  h: Math.min(120, W*0.15) 
+  w: Math.min(160, W*0.18), 
+  h: Math.min(160, W*0.18) 
 };
 let score = 0;
 let timeLeft = 30; // seconds (current round; bonus uses 10)
@@ -162,7 +162,7 @@ function preloadImages() {
 function resize() {
   W = window.innerWidth; H = window.innerHeight;
   canvas.width = W; canvas.height = H;
-  player.w = Math.min(120, W*0.15); 
+  player.w = Math.min(160, W*0.18); 
   player.h = player.w; 
   player.y = H - H*0.18;
   timerCanvas.style.width = Math.min(72, W*0.12)+'px';
@@ -420,3 +420,4 @@ resize();
 </script>
 </body>
 </html>
+
