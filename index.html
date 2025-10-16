@@ -14,31 +14,38 @@ body{overflow:hidden;font-family:'Arial',sans-serif;height:100vh;background:#000
 #player{
   position:absolute;bottom:10%;left:45%;
   width:12vw; max-width:80px; height:auto;
+  min-width:40px; min-height:40px;
   background:url('backchar/char.png') no-repeat center/contain;
+  display:block;
+  z-index:10;
 }
 .item{
   position:absolute;top:-50px;
   width:10vw; max-width:50px; height:auto;
+  min-width:40px; min-height:40px;
   background-size:contain;background-repeat:no-repeat;
+  display:block;
+  z-index:5;
 }
 #startScreen,#resultScreen{
   position:absolute;top:0;left:0;width:100%;height:100%;
   background-size:cover;display:flex;flex-direction:column;
   justify-content:center;align-items:center;color:white;
   text-align:center;text-shadow:0 2px 4px rgba(0,0,0,0.4);
+  z-index:100;
 }
 #startScreen h1,#resultScreen h1{font-size:6vw;line-height:1.4;margin-bottom:2vh;}
 #startScreen button,#resultScreen button{
   background-color:#ff9800;border:none;color:white;padding:1.5vh 3vw;margin:1vh;
   font-size:4vw;border-radius:1vw;box-shadow:0 0.5vh 1vh rgba(0,0,0,0.2);cursor:pointer;
 }
-#scoreBoard{position:absolute;top:1vh;left:2vw;font-size:4vw;color:#ff6f00;font-weight:bold;}
-#timerCanvas{position:absolute;top:1vh;right:2vw;width:10vw;height:10vw;max-width:50px;max-height:50px;}
+#scoreBoard{position:absolute;top:1vh;left:2vw;font-size:4vw;color:#ff6f00;font-weight:bold; z-index:15;}
+#timerCanvas{position:absolute;top:1vh;right:2vw;width:10vw;height:10vw;max-width:50px;max-height:50px; z-index:15;}
 #goalMessage{
   position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);
-  font-size:15vw;font-weight:900;color:#ff9800;
+  font-size:20vw;font-weight:900;color:#ff9800;
   text-shadow:0 2px 6px rgba(0,0,0,0.7);display:none;
-  pointer-events:none;z-index:999;
+  pointer-events:none; z-index:9999;
 }
 </style>
 </head>
@@ -67,7 +74,7 @@ body{overflow:hidden;font-family:'Arial',sans-serif;height:100vh;background:#000
 
 <script>
 // ===========================
-// 이미지 preload
+// 1. 이미지 preload
 // ===========================
 const imageSources = [
   'backchar/mandarin.png',
@@ -79,9 +86,9 @@ const imageSources = [
 
 function preloadImages(sources, callback){
   let loaded = 0;
-  for(let src of sources){
+  for(let i=0;i<sources.length;i++){
     const img = new Image();
-    img.src = src;
+    img.src = sources[i];
     img.onload = ()=>{
       loaded++;
       if(loaded===sources.length) callback();
@@ -90,7 +97,7 @@ function preloadImages(sources, callback){
 }
 
 // ===========================
-// DOM
+// 2. DOM 요소
 // ===========================
 const startBtn=document.getElementById('startBtn');
 const startScreen=document.getElementById('startScreen');
@@ -107,7 +114,7 @@ const goalMessage=document.getElementById('goalMessage');
 let score=0,time=30,timer,gameRunning=false;
 
 // ===========================
-// 배경 적용
+// 3. 배경 적용
 // ===========================
 let backgroundImageUrl = 'backchar/SKKUpaper.jpg';
 [startScreen, gameCanvas, resultScreen].forEach(el=>{
@@ -115,38 +122,38 @@ let backgroundImageUrl = 'backchar/SKKUpaper.jpg';
 });
 
 // ===========================
-// 3·2·1 카운트
-// ===========================
-function startCountdown(){
-  return new Promise(resolve=>{
-    let count=3;
-    goalMessage.style.display='block';
-    const interval = setInterval(()=>{
-      goalMessage.innerText = count>0 ? count : '시작!';
-      count--;
-      if(count<0){
-        clearInterval(interval);
-        goalMessage.style.display='none';
-        resolve();
-      }
-    },1000);
-  });
-}
-
-// ===========================
-// 게임 시작
+// 4. 게임 시작 (preload + 3·2·1)
 // ===========================
 preloadImages(imageSources, ()=>{
   console.log('모든 이미지 로딩 완료');
   startScreen.style.display = 'flex';
 });
 
-startBtn.onclick = async ()=>{
+startBtn.onclick = ()=>{
   startBtn.disabled = true;
-  await startCountdown();
-  startGame();
+  startCountdown(startGame);
 }
 
+// 3·2·1 카운트
+function startCountdown(callback){
+  let count=3;
+  goalMessage.style.display='block';
+  goalMessage.innerText = count;
+  const cdInterval=setInterval(()=>{
+    count--;
+    if(count>0){
+      goalMessage.innerText = count;
+    } else{
+      clearInterval(cdInterval);
+      goalMessage.style.display='none';
+      callback();
+    }
+  },1000);
+}
+
+// ===========================
+// 5. 게임 시작
+// ===========================
 function startGame(){
   startScreen.style.display='none';
   gameCanvas.style.display='block';
@@ -170,12 +177,13 @@ function tick(){
       clearFruits();
       goalMessage.innerText="목표 달성!";
       goalMessage.style.display='block';
-      setTimeout(async ()=>{
-        await startCountdown();
-        goalMessage.style.display='none';
-        time=10;
-        gameRunning=true;
-        randomSpawn();
+      setTimeout(()=>{
+        startCountdown(()=>{
+          goalMessage.style.display='none';
+          time=10;
+          gameRunning=true;
+          randomSpawn();
+        });
       },1000);
     } else{
       endGame();
@@ -184,7 +192,7 @@ function tick(){
 }
 
 // ===========================
-// 귤 생성
+// 6. 귤 생성
 // ===========================
 function randomSpawn(){
   if(!gameRunning) return;
@@ -198,9 +206,9 @@ function spawnItem(){
   item.classList.add('item');
   const type=Math.random();
   let speed=6;
-  if(type<0.6){item.style.backgroundImage="url('backchar/mandarin.png')"; item.dataset.type='normal'; speed=6;}
-  else if(type<0.85){item.style.backgroundImage="url('backchar/gold_mandarin.png')"; item.dataset.type='gold'; speed=9;}
-  else{item.style.backgroundImage="url('backchar/Bomb.png')"; item.dataset.type='bomb'; speed=6;}
+  if(type<0.6){item.style.backgroundImage="url('backchar/mandarin.png')";item.dataset.type='normal'; speed=6;}
+  else if(type<0.85){item.style.backgroundImage="url('backchar/gold_mandarin.png')";item.dataset.type='gold'; speed=9;}
+  else{item.style.backgroundImage="url('backchar/Bomb.png')";item.dataset.type='bomb'; speed=6;}
   item.style.left=Math.random()*(window.innerWidth-50)+'px';
   gameCanvas.appendChild(item);
 
@@ -209,27 +217,30 @@ function spawnItem(){
     if(!gameRunning){clearInterval(fall); return;}
     top += speed;
     item.style.top = top + 'px';
+
     const playerRect=player.getBoundingClientRect();
     const itemRect=item.getBoundingClientRect();
     if(itemRect.bottom >= playerRect.top && itemRect.top <= playerRect.bottom &&
-       itemRect.right >= playerRect.left && itemRect.left <= playerRect.right){
+       itemRect.right >= playerRect.left && itemRect.left <= playerRect.right) {
       if(item.dataset.type==='normal') score+=1;
       else if(item.dataset.type==='gold') score+=2;
       else if(item.dataset.type==='bomb') score=Math.floor(score/2);
       scoreBoard.innerText=`점수: ${score} | 시간: ${time}`;
-      item.remove(); clearInterval(fall);
+      item.remove();
+      clearInterval(fall);
     }
-    if(top>window.innerHeight){ item.remove(); clearInterval(fall);}
+
+    if(top > window.innerHeight){ item.remove(); clearInterval(fall);}
   },30);
 }
 
 // ===========================
-// 이전 귤 제거
+// 7. 이전 귤 제거
 // ===========================
 function clearFruits(){ document.querySelectorAll('.item').forEach(item=>item.remove()); }
 
 // ===========================
-// 캐릭터 터치 이동
+// 8. 캐릭터 터치 이동
 // ===========================
 document.addEventListener('touchmove',(e)=>{
   const touchX=e.touches[0].clientX;
@@ -237,33 +248,33 @@ document.addEventListener('touchmove',(e)=>{
 });
 
 // ===========================
-// 타이머 시각화
+// 9. 타이머 시각화 (색칠 + 시침 일치)
 // ===========================
 function drawTimer(){
   const radius=25;
   ctx.clearRect(0,0,50,50);
   const startAngle=-Math.PI/2;
-  const progress=(30-time)/30;
-  const endAngle=startAngle + 2*Math.PI*progress;
+  const endAngle=startAngle + 2*Math.PI*((30 - time)/30);
 
-  // 색칠 원
+  // 색칠
   ctx.beginPath();
   ctx.arc(radius,radius,radius-2,startAngle,endAngle);
   ctx.strokeStyle='#ff6f00';
   ctx.lineWidth=4;
   ctx.stroke();
 
-  // 바늘
+  // 시침
+  const angle=startAngle + 2*Math.PI*((30 - time)/30);
   ctx.beginPath();
   ctx.moveTo(radius,radius);
-  ctx.lineTo(radius+Math.cos(endAngle)*(radius-5), radius+Math.sin(endAngle)*(radius-5));
+  ctx.lineTo(radius+Math.cos(angle)*(radius-5), radius+Math.sin(angle)*(radius-5));
   ctx.strokeStyle='#ff3d00';
   ctx.lineWidth=2;
   ctx.stroke();
 }
 
 // ===========================
-// 게임 종료
+// 10. 게임 종료
 // ===========================
 function endGame(){
   gameRunning=false;
@@ -281,7 +292,7 @@ function endGame(){
 }
 
 // ===========================
-// 재시작 / 공유
+// 11. 재시작 / 공유
 // ===========================
 function restartGame(){
   resultScreen.style.display='none';
