@@ -139,8 +139,8 @@
   let player = { 
     x: W/2, 
     y: H - H*0.18, 
-    w: Math.max(120, Math.min(160, W*0.25)), // 최소 120, 최대 160
-    h: Math.max(120, Math.min(160, W*0.25))  // 최소 120, 최대 160
+    w: Math.max(80, Math.min(120, W*0.25)), // 최소 80, 최대 120
+    h: Math.max(80, Math.min(120, W*0.25))  // 최소 80, 최대 120
   };
   let score = 0;
   let timeLeft = 30; // seconds (current round; bonus uses 10)
@@ -169,23 +169,24 @@
   }
 
   // 리사이즈 처리
-  function resize() {
-    // 모바일에서 주소창을 제외한 실제 보이는 높이
-    W = window.innerWidth;
-    H = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+function resize() {
+  W = window.innerWidth;
+  // 모바일 대응: visualViewport.height가 있으면 사용
+  H = window.visualViewport ? window.visualViewport.height : window.innerHeight;
 
-    canvas.width = W;
-    canvas.height = H;
+  canvas.width = W;
+  canvas.height = H;
 
-    // player 크기 조정: 최소 120, 최대 160, 화면 비율 적용
-    player.w = Math.max(120, Math.min(160, W * 0.25));
-    player.h = player.w;
-    player.y = H - player.h - 10; // player가 아래에서 살짝 여유있게 위치
+  // player 크기 조정
+  player.w = Math.max(80, Math.min(120, W * 0.25));
+  player.h = player.w;
+  player.y = H - player.h - 20; // 화면 아래에서 20px 위
 
-    // 타이머 크기
-    timerCanvas.style.width = Math.min(72, W * 0.12) + 'px';
-    timerCanvas.style.height = Math.min(72, W * 0.12) + 'px';
+  // 타이머 크기
+  timerCanvas.style.width = Math.min(72, W * 0.12) + 'px';
+  timerCanvas.style.height = Math.min(72, W * 0.12) + 'px';
 }
+
 
 // 초기 실행 및 이벤트 등록
 resize();
@@ -448,4 +449,5 @@ if(window.visualViewport){
   </script>
   </body>
   </html>
+
 
