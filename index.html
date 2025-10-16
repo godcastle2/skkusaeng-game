@@ -9,18 +9,19 @@
 body{overflow:hidden;font-family:'Arial',sans-serif;height:100vh;}
 #gameCanvas{
   position:relative;width:100%;height:100vh;overflow:hidden;
-  background:url('https://images.unsplash.com/photo-1574169208507-843761748ab0') center/cover no-repeat;
+  background-size:cover;
+  background-position:center;
 }
 #gameCanvas::after{
   content:'';
   position:absolute;top:0;left:0;width:100%;height:100%;
   background:rgba(255,255,255,0.1);pointer-events:none;
 }
-#player{position:absolute;bottom:8vh;left:45%;width:80px;height:80px;background:url('https://cdn-icons-png.flaticon.com/512/415/415682.png') no-repeat center/contain;}
+#player{position:absolute;bottom:8vh;left:45%;width:80px;height:80px;background:url('backchar/char.png') no-repeat center/contain;}
 .item{position:absolute;top:-50px;width:50px;height:50px;background-size:contain;background-repeat:no-repeat;}
 #startScreen,#resultScreen{
   position:absolute;top:0;left:0;width:100%;height:100%;
-  background:url('https://images.unsplash.com/photo-1506744038136-46273834b3fb') center/cover no-repeat;
+  background-size:cover;
   display:flex;flex-direction:column;justify-content:center;align-items:center;
   color:white;text-align:center;text-shadow:0 2px 4px rgba(0,0,0,0.4);
 }
@@ -32,6 +33,7 @@ body{overflow:hidden;font-family:'Arial',sans-serif;height:100vh;}
   font-size:18px;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.2);cursor:pointer;
 }
 #scoreBoard{position:absolute;top:10px;left:10px;font-size:20px;color:#ff6f00;font-weight:bold;}
+#timerCanvas{position:absolute;top:10px;right:10px;width:50px;height:50px;}
 #resultScreen p{font-size:1.2em;margin:8px 0;}
 </style>
 </head>
@@ -45,6 +47,7 @@ body{overflow:hidden;font-family:'Arial',sans-serif;height:100vh;}
 
 <div id="gameCanvas" style="display:none;">
   <div id="scoreBoard">점수: 0 | 시간: 30</div>
+  <canvas id="timerCanvas" width="50" height="50"></canvas>
   <div id="player"></div>
 </div>
 
@@ -57,6 +60,14 @@ body{overflow:hidden;font-family:'Arial',sans-serif;height:100vh;}
 </div>
 
 <script>
+// ===========================
+// 1. 사용자 지정 배경 이미지
+// ===========================
+let backgroundImageUrl = 'backchar/SKKUpaper.jpg'; // 인게임 배경 이미지
+document.getElementById('gameCanvas').style.background = `url('${backgroundImageUrl}') center/cover no-repeat`;
+document.getElementById('startScreen').style.background = `url('${backgroundImageUrl}') center/cover no-repeat`;
+document.getElementById('resultScreen').style.background = `url('${backgroundImageUrl}') center/cover no-repeat`;
+
 const startBtn=document.getElementById('startBtn');
 const startScreen=document.getElementById('startScreen');
 const gameCanvas=document.getElementById('gameCanvas');
@@ -65,11 +76,16 @@ const player=document.getElementById('player');
 const scoreBoard=document.getElementById('scoreBoard');
 const finalResult=document.getElementById('finalResult');
 const avgResult=document.getElementById('avgResult');
+const timerCanvas=document.getElementById('timerCanvas');
+const ctx=timerCanvas.getContext('2d');
 
 let score=0,time=30,timer,gameRunning=false;
 
 startBtn.onclick=()=>startGame();
 
+// ===========================
+// 2. 게임 시작
+// ===========================
 function startGame(){
   startScreen.style.display='none';
   gameCanvas.style.display='block';
@@ -77,9 +93,11 @@ function startGame(){
   score=0;time=30;
   scoreBoard.innerText=`점수: ${score} | 시간: ${time}`;
   gameRunning=true;
+  drawTimer();
   timer=setInterval(()=>{
     time--;
     scoreBoard.innerText=`점수: ${score} | 시간: ${time}`;
+    drawTimer();
     if(time<=0){
       if(score>=50 && time>-5){time=10;}else{endGame();}
     }
@@ -87,10 +105,13 @@ function startGame(){
   randomSpawn();
 }
 
+// ===========================
+// 3. 귤 생성
+// ===========================
 function randomSpawn(){
   if(!gameRunning) return;
   spawnItem();
-  setTimeout(randomSpawn, Math.random()*500+400);
+  setTimeout(randomSpawn, Math.random()*400+200); // 빈도 증가
 }
 
 function spawnItem(){
@@ -98,16 +119,17 @@ function spawnItem(){
   const item=document.createElement('div');
   item.classList.add('item');
   const type=Math.random();
-  if(type<0.6){item.style.backgroundImage="url('https://cdn-icons-png.flaticon.com/512/2909/2909769.png')";item.dataset.type='normal';}
-  else if(type<0.85){item.style.backgroundImage="url('https://cdn-icons-png.flaticon.com/512/615/615075.png')";item.dataset.type='gold';}
-  else{item.style.backgroundImage="url('https://cdn-icons-png.flaticon.com/512/562/562619.png')";item.dataset.type='bomb';}
+  let speed=6;
+  if(type<0.6){item.style.backgroundImage="url('mandarin.png')";item.dataset.type='normal'; speed=6;} // 일반 귤
+  else if(type<0.85){item.style.backgroundImage="url('gold_mandarin.png')";item.dataset.type='gold'; speed=9;} // 황금 귤 속도 증가
+  else{item.style.backgroundImage="url('backchar/Bomb.png')";item.dataset.type='bomb'; speed=6;} // 폭탄
   item.style.left=Math.random()*(window.innerWidth-50)+'px';
   gameCanvas.appendChild(item);
 
   let top=0;
   const fall=setInterval(()=>{
     if(!gameRunning){clearInterval(fall); return;}
-    top += 6;
+    top += speed;
     item.style.top = top + 'px';
 
     const playerRect=player.getBoundingClientRect();
@@ -126,11 +148,40 @@ function spawnItem(){
   },30);
 }
 
+// ===========================
+// 4. 캐릭터 터치 이동
+// ===========================
 document.addEventListener('touchmove',(e)=>{
   const touchX=e.touches[0].clientX;
   player.style.left=Math.min(Math.max(touchX-40,0),window.innerWidth-80)+'px';
 });
 
+// ===========================
+// 5. 타이머 시계 그리기
+// ===========================
+function drawTimer(){
+  const radius=25;
+  ctx.clearRect(0,0,50,50);
+  // 원
+  ctx.beginPath();
+  ctx.arc(radius,radius,radius-2,0,2*Math.PI);
+  ctx.strokeStyle='rgba(255,111,0,0.3)';
+  ctx.lineWidth=4;
+  ctx.stroke();
+
+  // 바늘
+  const angle=(time/30)*2*Math.PI - Math.PI/2; // 0~30초 기준
+  ctx.beginPath();
+  ctx.moveTo(radius,radius);
+  ctx.lineTo(radius+Math.cos(angle)*(radius-5), radius+Math.sin(angle)*(radius-5));
+  ctx.strokeStyle='#ff6f00';
+  ctx.lineWidth=3;
+  ctx.stroke();
+}
+
+// ===========================
+// 6. 게임 종료
+// ===========================
 function endGame(){
   gameRunning=false;
   clearInterval(timer);
@@ -146,6 +197,9 @@ function endGame(){
   avgResult.innerText=`현재 평균 입학률(누적 ${history.length}회): ${avgRate}%`;
 }
 
+// ===========================
+// 7. 게임 재시작 / 공유
+// ===========================
 function restartGame(){resultScreen.style.display='none';startScreen.style.display='flex';}
 function shareResult(){alert("결과를 공유했습니다! (SNS API 연동 가능)");}
 </script>
