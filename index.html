@@ -28,7 +28,9 @@ body{overflow:hidden;font-family:'Arial',sans-serif;height:100vh;}
 #timerCanvas{position:absolute;top:10px;right:10px;width:50px;height:50px;}
 #goalMessage{
   position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);
-  font-size:2em;color:#ffeb3b;text-shadow:0 2px 4px rgba(0,0,0,0.5);display:none;
+  font-size:6em;font-weight:700;color:#ff9800;
+  text-shadow:0 2px 6px rgba(0,0,0,0.7);display:none;
+  pointer-events:none;
 }
 </style>
 </head>
@@ -44,7 +46,7 @@ body{overflow:hidden;font-family:'Arial',sans-serif;height:100vh;}
   <div id="scoreBoard">점수: 0 | 시간: 30</div>
   <canvas id="timerCanvas" width="50" height="50"></canvas>
   <div id="player"></div>
-  <div id="goalMessage">목표 달성!</div>
+  <div id="goalMessage">3</div>
 </div>
 
 <div id="resultScreen" style="display:none; flex-direction:column;">
@@ -57,7 +59,7 @@ body{overflow:hidden;font-family:'Arial',sans-serif;height:100vh;}
 
 <script>
 // ===========================
-// 1. 이미지 preload
+// 1. 이미지 preload (배경 포함)
 // ===========================
 const imageSources = [
   'backchar/mandarin.png',
@@ -69,16 +71,13 @@ const imageSources = [
 
 function preloadImages(sources, callback){
   let loaded = 0;
-  const images = [];
   for(let i=0;i<sources.length;i++){
-    images[i] = new Image();
-    images[i].src = sources[i];
-    images[i].onload = ()=>{
+    const img = new Image();
+    img.src = sources[i];
+    img.onload = ()=>{
       loaded++;
-      if(loaded === sources.length){
-        callback();
-      }
-    };
+      if(loaded===sources.length) callback();
+    }
   }
 }
 
@@ -117,21 +116,32 @@ preloadImages(imageSources, ()=>{
 
 startBtn.onclick = ()=>{
   startBtn.disabled = true;
-  let count = 3;
-  goalMessage.innerText = count;
+  startCountdown(startGame); // 시작 전 3·2·1
+}
+
+// 3·2·1 카운트
+function startCountdown(callback){
+  let count=3;
   goalMessage.style.display='block';
-  const countdown = setInterval(()=>{
+  goalMessage.style.fontSize='6em';
+  goalMessage.style.fontWeight='700';
+  goalMessage.style.color='#ff9800';
+  goalMessage.innerText = count;
+  const cdInterval=setInterval(()=>{
     count--;
     if(count>0){
       goalMessage.innerText = count;
-    }else{
-      clearInterval(countdown);
+    } else{
+      clearInterval(cdInterval);
       goalMessage.style.display='none';
-      startGame();
+      callback();
     }
   },1000);
 }
 
+// ===========================
+// 5. 게임 시작
+// ===========================
 function startGame(){
   startScreen.style.display='none';
   gameCanvas.style.display='block';
@@ -151,39 +161,24 @@ function tick(){
   drawTimer();
   if(time<=0){
     if(score>=50){
+      // 목표 달성 메시지
       gameRunning=false;
+      clearFruits(); // 이전 귤/폭탄 제거
       goalMessage.innerText="목표 달성!";
       goalMessage.style.display='block';
       setTimeout(()=>{
-        countdown3_2_1(()=>{
+        // 보너스 타임 3·2·1
+        startCountdown(()=>{
           goalMessage.style.display='none';
           time=10;
           gameRunning=true;
           randomSpawn();
         });
       },1000);
-    }else{
+    } else{
       endGame();
     }
   }
-}
-
-// ===========================
-// 5. 3·2·1 카운트
-// ===========================
-function countdown3_2_1(callback){
-  let count=3;
-  goalMessage.innerText = count;
-  goalMessage.style.display='block';
-  const cdInterval = setInterval(()=>{
-    count--;
-    if(count>0){
-      goalMessage.innerText = count;
-    } else {
-      clearInterval(cdInterval);
-      callback();
-    }
-  },1000);
 }
 
 // ===========================
@@ -201,21 +196,9 @@ function spawnItem(){
   item.classList.add('item');
   const type=Math.random();
   let speed=6;
-
-  if(type<0.6){
-    item.style.backgroundImage="url('backchar/mandarin.png')";
-    item.dataset.type='normal';
-    speed=6;
-  } else if(type<0.85){
-    item.style.backgroundImage="url('backchar/gold_mandarin.png')";
-    item.dataset.type='gold';
-    speed=9;
-  } else{
-    item.style.backgroundImage="url('backchar/Bomb.png')";
-    item.dataset.type='bomb';
-    speed=6;
-  }
-
+  if(type<0.6){item.style.backgroundImage="url('backchar/mandarin.png')";item.dataset.type='normal'; speed=6;}
+  else if(type<0.85){item.style.backgroundImage="url('backchar/gold_mandarin.png')";item.dataset.type='gold'; speed=9;}
+  else{item.style.backgroundImage="url('backchar/Bomb.png')";item.dataset.type='bomb'; speed=6;}
   item.style.left=Math.random()*(window.innerWidth-50)+'px';
   gameCanvas.appendChild(item);
 
@@ -242,7 +225,14 @@ function spawnItem(){
 }
 
 // ===========================
-// 7. 캐릭터 터치 이동
+// 7. 이전 귤/폭탄 제거
+// ===========================
+function clearFruits(){
+  document.querySelectorAll('.item').forEach(item=>item.remove());
+}
+
+// ===========================
+// 8. 캐릭터 터치 이동
 // ===========================
 document.addEventListener('touchmove',(e)=>{
   const touchX=e.touches[0].clientX;
@@ -250,20 +240,17 @@ document.addEventListener('touchmove',(e)=>{
 });
 
 // ===========================
-// 8. 타이머 시각화
+// 9. 타이머 시각화
 // ===========================
 function drawTimer(){
   const radius=25;
   ctx.clearRect(0,0,50,50);
-
-  // 배경 원
   ctx.beginPath();
   ctx.arc(radius,radius,radius-2,0,2*Math.PI);
   ctx.strokeStyle='rgba(255,111,0,0.3)';
   ctx.lineWidth=4;
   ctx.stroke();
 
-  // 진행 원
   const startAngle=-Math.PI/2;
   const endAngle=startAngle + 2*Math.PI*((30 - time)/30);
   ctx.beginPath();
@@ -272,7 +259,6 @@ function drawTimer(){
   ctx.lineWidth=4;
   ctx.stroke();
 
-  // 바늘
   const angle=(time/30)*2*Math.PI - Math.PI/2;
   ctx.beginPath();
   ctx.moveTo(radius,radius);
@@ -283,7 +269,7 @@ function drawTimer(){
 }
 
 // ===========================
-// 9. 게임 종료
+// 10. 게임 종료
 // ===========================
 function endGame(){
   gameRunning=false;
@@ -301,7 +287,7 @@ function endGame(){
 }
 
 // ===========================
-// 10. 재시작 / 공유
+// 11. 재시작 / 공유
 // ===========================
 function restartGame(){
   resultScreen.style.display='none';
@@ -316,9 +302,7 @@ function shareResult(){
     url: window.location.href
   }
   if(navigator.share){
-    navigator.share(shareData)
-      .then(()=>console.log('공유 성공'))
-      .catch(err=>console.log('공유 실패', err));
+    navigator.share(shareData).then(()=>console.log('공유 성공')).catch(err=>console.log('공유 실패', err));
   } else {
     prompt("링크를 복사해서 공유하세요:", window.location.href);
   }
