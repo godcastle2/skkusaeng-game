@@ -2,35 +2,44 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>성균관대 감귤학과 입학률 테스트 🍊</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body{overflow:hidden;font-family:'Arial',sans-serif;height:100vh;}
+body{overflow:hidden;font-family:'Arial',sans-serif;height:100vh;background:#000;}
 #gameCanvas{
   position:relative;width:100%;height:100vh;overflow:hidden;
   background-size:cover;background-position:center;
 }
-#player{position:absolute;bottom:8vh;left:45%;width:80px;height:80px;background:url('backchar/char.png') no-repeat center/contain;}
-.item{position:absolute;top:-50px;width:50px;height:50px;background-size:contain;background-repeat:no-repeat;}
+#player{
+  position:absolute;bottom:10%;left:45%;
+  width:12vw; max-width:80px; height:auto;
+  background:url('backchar/char.png') no-repeat center/contain;
+}
+.item{
+  position:absolute;top:-50px;
+  width:10vw; max-width:50px; height:auto;
+  background-size:contain;background-repeat:no-repeat;
+}
 #startScreen,#resultScreen{
   position:absolute;top:0;left:0;width:100%;height:100%;
   background-size:cover;display:flex;flex-direction:column;
   justify-content:center;align-items:center;color:white;
   text-align:center;text-shadow:0 2px 4px rgba(0,0,0,0.4);
 }
-#startScreen h1,#resultScreen h1{font-size:2em;line-height:1.4;margin-bottom:20px;}
+#startScreen h1,#resultScreen h1{font-size:6vw;line-height:1.4;margin-bottom:2vh;}
 #startScreen button,#resultScreen button{
-  background-color:#ff9800;border:none;color:white;padding:15px 25px;margin:10px;
-  font-size:18px;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.2);cursor:pointer;
+  background-color:#ff9800;border:none;color:white;padding:1.5vh 3vw;margin:1vh;
+  font-size:4vw;border-radius:1vw;box-shadow:0 0.5vh 1vh rgba(0,0,0,0.2);cursor:pointer;
 }
-#scoreBoard{position:absolute;top:10px;left:10px;font-size:20px;color:#ff6f00;font-weight:bold;}
-#timerCanvas{position:absolute;top:10px;right:10px;width:50px;height:50px;}
+#scoreBoard{position:absolute;top:1vh;left:2vw;font-size:4vw;color:#ff6f00;font-weight:bold;}
+#timerCanvas{position:absolute;top:1vh;right:2vw;width:10vw;height:10vw;max-width:50px;max-height:50px;}
 #goalMessage{
   position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);
-  font-size:6em;font-weight:700;color:#ff9800;
+  font-size:12vw;font-weight:700;color:#ff9800;
   text-shadow:0 2px 6px rgba(0,0,0,0.7);display:none;
   pointer-events:none;
+  z-index:999;
 }
 </style>
 </head>
@@ -59,7 +68,7 @@ body{overflow:hidden;font-family:'Arial',sans-serif;height:100vh;}
 
 <script>
 // ===========================
-// 1. 이미지 preload (배경 포함)
+// 1. 이미지 preload (배경 + 캐릭터 + 아이템)
 // ===========================
 const imageSources = [
   'backchar/mandarin.png',
@@ -123,9 +132,6 @@ startBtn.onclick = ()=>{
 function startCountdown(callback){
   let count=3;
   goalMessage.style.display='block';
-  goalMessage.style.fontSize='6em';
-  goalMessage.style.fontWeight='700';
-  goalMessage.style.color='#ff9800';
   goalMessage.innerText = count;
   const cdInterval=setInterval(()=>{
     count--;
@@ -161,13 +167,11 @@ function tick(){
   drawTimer();
   if(time<=0){
     if(score>=50){
-      // 목표 달성 메시지
       gameRunning=false;
-      clearFruits(); // 이전 귤/폭탄 제거
+      clearFruits(); // 이전 귤 제거
       goalMessage.innerText="목표 달성!";
       goalMessage.style.display='block';
       setTimeout(()=>{
-        // 보너스 타임 3·2·1
         startCountdown(()=>{
           goalMessage.style.display='none';
           time=10;
@@ -182,12 +186,12 @@ function tick(){
 }
 
 // ===========================
-// 6. 귤 생성
+// 6. 귤 생성 (모바일 최적화)
 // ===========================
 function randomSpawn(){
   if(!gameRunning) return;
   spawnItem();
-  setTimeout(randomSpawn, Math.random()*400+200);
+  setTimeout(randomSpawn, Math.random()*500+300); // 빈도 조정
 }
 
 function spawnItem(){
@@ -225,18 +229,16 @@ function spawnItem(){
 }
 
 // ===========================
-// 7. 이전 귤/폭탄 제거
+// 7. 이전 귤 제거
 // ===========================
-function clearFruits(){
-  document.querySelectorAll('.item').forEach(item=>item.remove());
-}
+function clearFruits(){ document.querySelectorAll('.item').forEach(item=>item.remove()); }
 
 // ===========================
 // 8. 캐릭터 터치 이동
 // ===========================
 document.addEventListener('touchmove',(e)=>{
   const touchX=e.touches[0].clientX;
-  player.style.left=Math.min(Math.max(touchX-40,0),window.innerWidth-80)+'px';
+  player.style.left=Math.min(Math.max(touchX - player.offsetWidth/2,0),window.innerWidth - player.offsetWidth)+'px';
 });
 
 // ===========================
