@@ -21,7 +21,7 @@
     }
     #player {
       position: absolute;
-      bottom: 10px;
+      bottom: 8vh; /* 짤림 방지 */
       left: 45%;
       width: 80px;
       height: 80px;
@@ -45,6 +45,7 @@
       justify-content: center;
       align-items: center;
       color: white;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.4);
     }
     #startScreen button, #resultScreen button {
       background-color: #ff9800;
@@ -82,6 +83,7 @@
   <div id="resultScreen" style="display:none; flex-direction:column;">
     <h1>결과 발표 🎓</h1>
     <p id="finalResult" style="font-size:24px; color:#ff6f00;"></p>
+    <p id="avgResult" style="font-size:20px; color:#ff9800;"></p>
     <button onclick="restartGame()">다시하기</button>
     <button onclick="shareResult()">결과 공유하기</button>
   </div>
@@ -94,17 +96,18 @@
     const player = document.getElementById('player');
     const scoreBoard = document.getElementById('scoreBoard');
     const finalResult = document.getElementById('finalResult');
+    const avgResult = document.getElementById('avgResult');
 
     let score = 0;
     let time = 30;
-    let gameInterval, dropInterval, timer;
-    let gameRunning = false;
+    let timer, gameRunning = false;
 
     startBtn.onclick = () => startGame();
 
     function startGame() {
       startScreen.style.display = 'none';
       gameCanvas.style.display = 'block';
+      resultScreen.style.display = 'none';
       score = 0; time = 30;
       scoreBoard.innerText = `점수: ${score} | 시간: ${time}`;
       gameRunning = true;
@@ -113,7 +116,7 @@
         time--;
         scoreBoard.innerText = `점수: ${score} | 시간: ${time}`;
         if (time <= 0) {
-          if (score >= 50) {
+          if (score >= 50 && time > -5) {
             time = 10; // 보너스 타임
           } else {
             endGame();
@@ -121,9 +124,17 @@
         }
       }, 1000);
 
-      dropInterval = setInterval(spawnItem, 1000);
+      randomSpawn(); // 귤 생성 시작
     }
 
+    // 랜덤 간격으로 아이템 생성
+    function randomSpawn() {
+      if (!gameRunning) return;
+      spawnItem();
+      setTimeout(randomSpawn, Math.random() * 500 + 400); // 0.4~0.9초 간격
+    }
+
+    // 아이템 생성
     function spawnItem() {
       if (!gameRunning) return;
       const item = document.createElement('div');
@@ -145,9 +156,9 @@
       let top = 0;
       const fall = setInterval(() => {
         if (!gameRunning) { clearInterval(fall); return; }
-        top += 5;
+        top += 6;
         item.style.top = top + 'px';
-        if (top > window.innerHeight - 100) {
+        if (top > window.innerHeight - 120) {
           const playerRect = player.getBoundingClientRect();
           const itemRect = item.getBoundingClientRect();
           if (itemRect.left < playerRect.right && itemRect.right > playerRect.left) {
@@ -168,14 +179,25 @@
       player.style.left = Math.min(Math.max(touchX - 40, 0), window.innerWidth - 80) + 'px';
     });
 
+    // 게임 종료
     function endGame() {
       gameRunning = false;
       clearInterval(timer);
-      clearInterval(dropInterval);
       gameCanvas.style.display = 'none';
       resultScreen.style.display = 'flex';
+
+      // ✅ 점수 저장
+      let history = JSON.parse(localStorage.getItem('gameScores') || '[]');
+      history.push(score);
+      localStorage.setItem('gameScores', JSON.stringify(history));
+
+      // ✅ 평균 점수 기반 입학률 계산
+      const avgScore = history.reduce((a, b) => a + b, 0) / history.length;
       const rate = Math.min(100, Math.floor((score / 100) * 73));
-      finalResult.innerText = `당신의 성균관대 감귤학과 입학률은 ${rate}% 입니다! 🍊 (평균: 73%)`;
+      const avgRate = Math.min(100, Math.floor((avgScore / 100) * 73));
+
+      finalResult.innerText = `당신의 감귤학과 입학률은 ${rate}% 입니다! 🍊`;
+      avgResult.innerText = `현재 평균 입학률(누적 ${history.length}회): ${avgRate}%`;
     }
 
     function restartGame() {
@@ -184,7 +206,7 @@
     }
 
     function shareResult() {
-      alert("결과를 공유했습니다! (실제 구현 시 SNS 공유 API 연결 가능)");
+      alert("결과를 공유했습니다! (SNS API 연동 가능)");
     }
   </script>
 
