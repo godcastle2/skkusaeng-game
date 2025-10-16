@@ -74,7 +74,14 @@
     <div id="resultScreen">
       <div class="card">
         <h2 id="resultTitle">결과 발표</h2>
-        <p id="resultText" style="font-size:4.2vw;margin:2vh 0;color:var(--orange)"></p>
+        <p id="resultText" style="
+          font-size:3.6vw;      /* 글씨 크기 조금 줄임 */
+          font-weight:800;       /* 글씨 두껍게 */
+          line-height:1.3;       /* 줄 간격 조절 */
+          color:var(--orange);
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* 가독성 위해 그림자 추가 */
+          margin:2vh 0;
+        "></p>
         <div style="display:flex;gap:10px;justify-content:center;margin-top:2vh">
           <button id="retryBtn" class="btn">다시하기</button>
           <button id="shareResultBtn" class="btn">결과 공유</button>
@@ -180,9 +187,9 @@ function showSmallNotice(text, ms=900){
 function spawnOne() {
   if(items.length >= MAX_ITEMS) return;
   const r = Math.random();
-  if(r < 0.65){
+  if(r < 0.6){
     items.push({ x: Math.random()*(W-52), y:-70, sz: Math.min(56, W*0.11), speed: 120 + Math.random()*40, type:'mandarin' });
-  } else if(r < 0.9){
+  } else if(r < 0.8){
     items.push({ x: Math.random()*(W-56), y:-70, sz: Math.min(60, W*0.12), speed: 170 + Math.random()*60, type:'gold' });
   } else {
     items.push({ x: Math.random()*(W-52), y:-70, sz: Math.min(56, W*0.11), speed: 140 + Math.random()*50, type:'bomb' });
@@ -220,7 +227,7 @@ function drawTimerCanvas(){
   ctx.stroke();
 
   // hand (counter-clockwise relative to progress)
-  const handAngle = startA - 2*Math.PI*progress;
+  const handAngle = startA + 2*Math.PI*progress;
   ctx.beginPath();
   ctx.moveTo(50,50);
   ctx.lineTo(50 + Math.cos(handAngle)*(radius-6), 50 + Math.sin(handAngle)*(radius-6));
