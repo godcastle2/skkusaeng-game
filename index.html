@@ -66,7 +66,21 @@ const imageSources = [
   'backchar/char.png',
   'backchar/SKKUpaper.jpg'
 ];
-imageSources.forEach(src => { const img = new Image(); img.src = src; });
+
+function preloadImages(sources, callback){
+  let loaded = 0;
+  const images = [];
+  for(let i=0;i<sources.length;i++){
+    images[i] = new Image();
+    images[i].src = sources[i];
+    images[i].onload = ()=>{
+      loaded++;
+      if(loaded === sources.length){
+        callback();
+      }
+    };
+  }
+}
 
 // ===========================
 // 2. DOM 요소
@@ -83,9 +97,7 @@ const timerCanvas=document.getElementById('timerCanvas');
 const ctx=timerCanvas.getContext('2d');
 const goalMessage=document.getElementById('goalMessage');
 
-let score=0, time=30, timer, gameRunning=false;
-
-startBtn.onclick=()=>startGame();
+let score=0,time=30,timer,gameRunning=false;
 
 // ===========================
 // 3. 배경 적용
@@ -96,8 +108,30 @@ startScreen.style.background = `url('${backgroundImageUrl}') center/cover no-rep
 resultScreen.style.background = `url('${backgroundImageUrl}') center/cover no-repeat`;
 
 // ===========================
-// 4. 게임 시작
+// 4. 게임 시작 (preload + 3·2·1)
 // ===========================
+preloadImages(imageSources, ()=>{
+  console.log('모든 이미지 로딩 완료');
+  startScreen.style.display = 'flex';
+});
+
+startBtn.onclick = ()=>{
+  startBtn.disabled = true;
+  let count = 3;
+  goalMessage.innerText = count;
+  goalMessage.style.display='block';
+  const countdown = setInterval(()=>{
+    count--;
+    if(count>0){
+      goalMessage.innerText = count;
+    }else{
+      clearInterval(countdown);
+      goalMessage.style.display='none';
+      startGame();
+    }
+  },1000);
+}
+
 function startGame(){
   startScreen.style.display='none';
   gameCanvas.style.display='block';
@@ -272,6 +306,7 @@ function endGame(){
 function restartGame(){
   resultScreen.style.display='none';
   startScreen.style.display='flex';
+  startBtn.disabled = false;
 }
 
 function shareResult(){
