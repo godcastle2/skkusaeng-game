@@ -9,7 +9,9 @@
   :root{--orange:#ff9800;--dark:#0b0b0f}
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;background:var(--dark);font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",sans-serif;color:#fff}
-  #container{position:relative;width:100vw;height:100vh;overflow:hidden}
+  #container{position:relative;width:100vw;height:100vh;overflow:hidden;      /* 스크롤 막기 */
+  touch-action: none;     /* 터치 제스처로 스크롤 방지 */
+  overscroll-behavior: none; /* iOS/Chrome 바운스 스크롤 방지 */}
   canvas#gameCanvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block;z-index:1}
   /* Timer canvas */
   canvas#timerCanvas{position:absolute;right:3vw;top:3vh;width:12vw;height:12vw;max-width:72px;max-height:72px;z-index:30}
@@ -130,8 +132,8 @@ let items = []; // {x,y,sz,speed,type}
 let player = { 
   x: W/2, 
   y: H - H*0.18, 
-  w: Math.min(160, W*0.25), 
-  h: Math.min(160, W*0.25) 
+  w: Math.max(120, Math.min(160, W*0.25)), // 최소 120, 최대 160
+  h: Math.max(120, Math.min(160, W*0.25))  // 최소 120, 최대 160
 };
 let score = 0;
 let timeLeft = 30; // seconds (current round; bonus uses 10)
@@ -161,16 +163,24 @@ function preloadImages() {
 
 // 리사이즈 처리
 function resize() {
-  W = window.innerWidth; H = window.innerHeight;
-  canvas.width = W; canvas.height = H;
-  player.w = Math.min(160, W*0.25);
-  player.h = player.w; 
-  player.y = H - H*0.15;
-  timerCanvas.style.width = Math.min(72, W*0.12)+'px';
-  timerCanvas.style.height = Math.min(72, W*0.12)+'px';
-}
-window.addEventListener('resize', resize);
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W;
+  canvas.height = H;
 
+  // player 크기 조정: 최소 120, 최대 160, 화면 비율 적용
+  player.w = Math.max(120, Math.min(160, W * 0.25));
+  player.h = player.w;
+  player.y = H - H * 0.18;
+
+  // 타이머 크기
+  timerCanvas.style.width = Math.min(72, W * 0.12) + 'px';
+  timerCanvas.style.height = Math.min(72, W * 0.12) + 'px';
+}
+
+// 초기 실행 및 이벤트 등록
+resize();
+window.addEventListener('resize', resize);
 // 유틸: 큰 중앙 메시지 (Promise 기반)
 function showCenterMessage(text, ms=700){
   return new Promise(res=>{
@@ -367,7 +377,11 @@ function setPlayerFromClientX(cx){
   player.x = Math.max(0, Math.min(W - player.w, cx - player.w/2));
 }
 window.addEventListener('mousemove', e => { if(state!=='idle') setPlayerFromClientX(e.clientX); });
-window.addEventListener('touchmove', e => { if(e.touches && e.touches[0]) setPlayerFromClientX(e.touches[0].clientX); }, {passive:true});
+// 플레이어 이동 + 화면 스크롤 방지
+window.addEventListener('touchmove', e => {
+  e.preventDefault();  // 스크롤 방지
+  if(e.touches && e.touches[0]) setPlayerFromClientX(e.touches[0].clientX);
+}, {passive:false});
 
 // Start sequence (preload -> show intro -> start button)
 preloadImages().then(()=> {
