@@ -168,31 +168,34 @@
     return Promise.all(promises).then(()=>{ loadedAll = true; loadingEl.style.display='none'; });
   }
 
-  // 리사이즈 처리
 function resize() {
-  W = window.innerWidth;
-  // 모바일 대응: visualViewport.height가 있으면 사용
-  H = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  // 화면 실제 표시 영역 가져오기 (모바일 크롬/아이폰 주소창 등 고려)
+  const vw = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+  const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+
+  W = vw;
+  H = vh;
 
   canvas.width = W;
   canvas.height = H;
 
-  // player 크기 조정
-  player.w = Math.max(80, Math.min(120, W * 0.2));
+  // player 크기 조정: 최소 120, 최대 160, 화면 비율 적용
+  player.w = Math.max(80, Math.min(120, W * 0.2)); // 기존 0.25 -> 0.2
   player.h = player.w;
-  player.y = H - player.h - 20; // 화면 아래에서 20px 위
+  player.y = H - H * 0.18; // 화면 아래에서 18% 위
 
   // 타이머 크기
   timerCanvas.style.width = Math.min(72, W * 0.12) + 'px';
   timerCanvas.style.height = Math.min(72, W * 0.12) + 'px';
 }
 
-
-// 초기 실행 및 이벤트 등록
+// 초기 실행
 resize();
-window.addEventListener('resize', resize);              // PC/브라우저 크기 변경
+
+// 윈도우, 비주얼뷰포트 이벤트 모두 처리
+window.addEventListener('resize', resize);
 if(window.visualViewport){
-  window.visualViewport.addEventListener('resize', resize); // 모바일 주소창/툴바 대응
+  window.visualViewport.addEventListener('resize', resize);
 }
 
   // 유틸: 큰 중앙 메시지 (Promise 기반)
@@ -449,6 +452,7 @@ if(window.visualViewport){
   </script>
   </body>
   </html>
+
 
 
 
