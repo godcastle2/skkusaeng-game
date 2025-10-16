@@ -139,8 +139,8 @@
   let player = { 
     x: W/2, 
     y: H - H*0.18, 
-    w: Math.max(80, Math.min(120, W*0.25)), // 최소 80, 최대 120
-    h: Math.max(80, Math.min(120, W*0.25))  // 최소 80, 최대 120
+    w: Math.max(80, Math.min(120, W*0.2)), // 최소 80, 최대 120
+    h: Math.max(80, Math.min(120, W*0.2))  // 최소 80, 최대 120
   };
   let score = 0;
   let timeLeft = 30; // seconds (current round; bonus uses 10)
@@ -178,7 +178,7 @@ function resize() {
   canvas.height = H;
 
   // player 크기 조정
-  player.w = Math.max(80, Math.min(120, W * 0.25));
+  player.w = Math.max(80, Math.min(120, W * 0.2));
   player.h = player.w;
   player.y = H - player.h - 20; // 화면 아래에서 20px 위
 
@@ -449,5 +449,6 @@ if(window.visualViewport){
   </script>
   </body>
   </html>
+
 
 
