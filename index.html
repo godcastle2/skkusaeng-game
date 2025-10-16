@@ -13,8 +13,7 @@ body{overflow:hidden;font-family:'Arial',sans-serif;height:100vh;}
   background-position:center;
 }
 #gameCanvas::after{
-  content:'';
-  position:absolute;top:0;left:0;width:100%;height:100%;
+  content:'';position:absolute;top:0;left:0;width:100%;height:100%;
   background:rgba(255,255,255,0.1);pointer-events:none;
 }
 #player{position:absolute;bottom:8vh;left:45%;width:80px;height:80px;background:url('backchar/char.png') no-repeat center/contain;}
@@ -120,9 +119,23 @@ function spawnItem(){
   item.classList.add('item');
   const type=Math.random();
   let speed=6;
-  if(type<0.6){item.style.backgroundImage="url('mandarin.png')";item.dataset.type='normal'; speed=6;} // 일반 귤
-  else if(type<0.85){item.style.backgroundImage="url('gold_mandarin.png')";item.dataset.type='gold'; speed=9;} // 황금 귤 속도 증가
-  else{item.style.backgroundImage="url('backchar/Bomb.png')";item.dataset.type='bomb'; speed=6;} // 폭탄
+
+  if(type<0.6){ // 일반 귤
+    item.style.backgroundImage="url('backchar/mandarin.png')";
+    item.dataset.type='normal';
+    speed=6;
+  }
+  else if(type<0.85){ // 황금 귤
+    item.style.backgroundImage="url('backchar/gold_mandarin.png')";
+    item.dataset.type='gold';
+    speed=9;
+  }
+  else{ // 폭탄
+    item.style.backgroundImage="url('backchar/Bomb.png')";
+    item.dataset.type='bomb';
+    speed=6;
+  }
+
   item.style.left=Math.random()*(window.innerWidth-50)+'px';
   gameCanvas.appendChild(item);
 
@@ -162,15 +175,12 @@ document.addEventListener('touchmove',(e)=>{
 function drawTimer(){
   const radius=25;
   ctx.clearRect(0,0,50,50);
-  // 원
   ctx.beginPath();
   ctx.arc(radius,radius,radius-2,0,2*Math.PI);
   ctx.strokeStyle='rgba(255,111,0,0.3)';
   ctx.lineWidth=4;
   ctx.stroke();
-
-  // 바늘
-  const angle=(time/30)*2*Math.PI - Math.PI/2; // 0~30초 기준
+  const angle=(time/30)*2*Math.PI - Math.PI/2;
   ctx.beginPath();
   ctx.moveTo(radius,radius);
   ctx.lineTo(radius+Math.cos(angle)*(radius-5), radius+Math.sin(angle)*(radius-5));
@@ -202,7 +212,7 @@ function endGame(){
 // ===========================
 function restartGame(){resultScreen.style.display='none';startScreen.style.display='flex';}
 function shareResult(){alert("결과를 공유했습니다! (SNS API 연동 가능)");}
-</script>
 
+</script>
 </body>
 </html>
