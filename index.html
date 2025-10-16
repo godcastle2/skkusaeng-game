@@ -56,7 +56,7 @@
     <!-- Intro screen (background image applied via JS/canvas too) -->
     <div id="intro">
       <div class="card">
-        <h1>성균관대 감귤학과 입학률 테스트 🍊</h1>
+        <h1>성균관대 감귤학과 <br> 입학률 테스트 🍊</h1>
         <p>
           🍊 떨어지는 귤을 잡고 폭탄을 피하세요!<br>
           🍊 일반 귤 1점 · 황금 귤 2점 · 폭탄은 점수 반으로 감소<br>
@@ -119,12 +119,17 @@ let images = {};
 let loadedAll = false;
 let state = 'idle'; // idle, running, bonus_pending, bonus_countdown, bonus_running, result
 let items = []; // {x,y,sz,speed,type}
-let player = { x: W/2, y: H - H*0.18, w: Math.min(80, W*0.12), h: Math.min(80, W*0.12) };
+let player = { 
+  x: W/2, 
+  y: H - H*0.18, 
+  w: Math.min(120, W*0.15), 
+  h: Math.min(120, W*0.15) 
+};
 let score = 0;
 let timeLeft = 30; // seconds (current round; bonus uses 10)
 let lastTs = 0;
 let spawnAcc = 0;
-let spawnInterval = 0.6; // avg seconds between spawns
+let spawnInterval = 0.4; // avg seconds between spawns
 const MAX_ITEMS = 30;
 
 // 이미지 preload (Promise.all)
@@ -150,7 +155,8 @@ function preloadImages() {
 function resize() {
   W = window.innerWidth; H = window.innerHeight;
   canvas.width = W; canvas.height = H;
-  player.w = Math.min(80, W*0.12); player.h = player.w;
+  player.w = Math.min(120, W*0.15); 
+  player.h = player.w; 
   player.y = H - H*0.18;
   timerCanvas.style.width = Math.min(72, W*0.12)+'px';
   timerCanvas.style.height = Math.min(72, W*0.12)+'px';
