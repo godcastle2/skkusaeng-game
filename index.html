@@ -167,35 +167,41 @@
     }));
     return Promise.all(promises).then(()=>{ loadedAll = true; loadingEl.style.display='none'; });
   }
-
 function resize() {
-  // 화면 실제 표시 영역 가져오기 (모바일 크롬/아이폰 주소창 등 고려)
-  const vw = window.visualViewport ? window.visualViewport.width : window.innerWidth;
-  const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  const container = document.getElementById('container');
 
-  W = vw;
-  H = vh;
+  W = container.clientWidth;   // 실제 화면 너비
+  H = container.clientHeight;  // 실제 화면 높이
 
   canvas.width = W;
   canvas.height = H;
 
-  // player 크기 조정: 최소 120, 최대 160, 화면 비율 적용
-  player.w = Math.max(80, Math.min(120, W * 0.2)); // 기존 0.25 -> 0.2
+  // player 크기 및 위치 조정
+  player.w = Math.max(80, Math.min(W * 0.2, 120));
   player.h = player.w;
-  player.y = H - H * 0.18; // 화면 아래에서 18% 위
+  player.y = H - player.h - H * 0.08;
 
   // 타이머 크기
   timerCanvas.style.width = Math.min(72, W * 0.12) + 'px';
   timerCanvas.style.height = Math.min(72, W * 0.12) + 'px';
 }
 
+
 // 초기 실행
 resize();
 
-// 윈도우, 비주얼뷰포트 이벤트 모두 처리
-window.addEventListener('resize', resize);
+// 화면 크기 조정
+function resizeHandler(){
+  requestAnimationFrame(resize); // 애니메이션 프레임 기준으로 resize 실행
+}
+
+// 일반 윈도우 크기 변화
+window.addEventListener('resize', resizeHandler);
+
+// visualViewport 지원 시 모바일 주소창 등 변화 처리
 if(window.visualViewport){
-  window.visualViewport.addEventListener('resize', resize);
+  window.visualViewport.addEventListener('resize', resizeHandler);
+  window.visualViewport.addEventListener('scroll', resizeHandler); // iOS Safari에서 스크롤도 높이 변화에 영향
 }
 
   // 유틸: 큰 중앙 메시지 (Promise 기반)
@@ -452,6 +458,7 @@ if(window.visualViewport){
   </script>
   </body>
   </html>
+
 
 
 
