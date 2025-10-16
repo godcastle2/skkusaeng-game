@@ -1,214 +1,140 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>성균관대 감귤학과 입학률 테스트 🍊</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      background: linear-gradient(to top, #fff3e0, #ffe0b2);
-      overflow: hidden;
-      font-family: 'Arial', sans-serif;
-      text-align: center;
-      height: 100vh;
-    }
-    #gameCanvas {
-      position: relative;
-      width: 100%;
-      height: 100vh;
-      overflow: hidden;
-    }
-    #player {
-      position: absolute;
-      bottom: 8vh; /* 짤림 방지 */
-      left: 45%;
-      width: 80px;
-      height: 80px;
-      background: url('https://cdn-icons-png.flaticon.com/512/415/415682.png') no-repeat center/contain;
-    }
-    .item {
-      position: absolute;
-      top: -50px;
-      width: 50px;
-      height: 50px;
-      background-size: contain;
-      background-repeat: no-repeat;
-    }
-    #startScreen, #resultScreen {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb') center/cover no-repeat;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.4);
-    }
-    #startScreen button, #resultScreen button {
-      background-color: #ff9800;
-      border: none;
-      color: white;
-      padding: 15px 25px;
-      margin: 10px;
-      font-size: 18px;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-      cursor: pointer;
-    }
-    #scoreBoard {
-      position: absolute;
-      top: 10px; left: 10px;
-      font-size: 20px;
-      color: #ff6f00;
-      font-weight: bold;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>성균관대 감귤학과 입학률 테스트 🍊</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{overflow:hidden;font-family:'Arial',sans-serif;height:100vh;background:linear-gradient(to top,#fff3e0,#ffe0b2);}
+#gameCanvas{position:relative;width:100%;height:100vh;overflow:hidden;}
+#player{position:absolute;bottom:8vh;left:45%;width:80px;height:80px;background:url('https://cdn-icons-png.flaticon.com/512/415/415682.png') no-repeat center/contain;}
+.item{position:absolute;top:-50px;width:50px;height:50px;background-size:contain;background-repeat:no-repeat;}
+#startScreen,#resultScreen{position:absolute;top:0;left:0;width:100%;height:100%;background:url('https://images.unsplash.com/photo-1506744038136-46273834b3fb') center/cover no-repeat;display:flex;flex-direction:column;justify-content:center;align-items:center;color:white;text-shadow:0 2px 4px rgba(0,0,0,0.4);}
+#startScreen button,#resultScreen button{background-color:#ff9800;border:none;color:white;padding:15px 25px;margin:10px;font-size:18px;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.2);cursor:pointer;}
+#scoreBoard{position:absolute;top:10px;left:10px;font-size:20px;color:#ff6f00;font-weight:bold;}
+</style>
 </head>
 <body>
 
-  <div id="startScreen">
-    <h1>🍊 성균관대 감귤학과 입학률 테스트 🍊</h1>
-    <button id="startBtn">시작하기</button>
-    <button onclick="shareResult()">공유하기</button>
-  </div>
+<div id="startScreen">
+  <h1>🍊 성균관대 감귤학과 입학률 테스트 🍊</h1>
+  <button id="startBtn">시작하기</button>
+  <button onclick="shareResult()">공유하기</button>
+</div>
 
-  <div id="gameCanvas" style="display:none;">
-    <div id="scoreBoard">점수: 0 | 시간: 30</div>
-    <div id="player"></div>
-  </div>
+<div id="gameCanvas" style="display:none;">
+  <div id="scoreBoard">점수: 0 | 시간: 30</div>
+  <div id="player"></div>
+</div>
 
-  <div id="resultScreen" style="display:none; flex-direction:column;">
-    <h1>결과 발표 🎓</h1>
-    <p id="finalResult" style="font-size:24px; color:#ff6f00;"></p>
-    <p id="avgResult" style="font-size:20px; color:#ff9800;"></p>
-    <button onclick="restartGame()">다시하기</button>
-    <button onclick="shareResult()">결과 공유하기</button>
-  </div>
+<div id="resultScreen" style="display:none; flex-direction:column;">
+  <h1>결과 발표 🎓</h1>
+  <p id="finalResult" style="font-size:24px; color:#ff6f00;"></p>
+  <p id="avgResult" style="font-size:20px; color:#ff9800;"></p>
+  <button onclick="restartGame()">다시하기</button>
+  <button onclick="shareResult()">결과 공유하기</button>
+</div>
 
-  <script>
-    const startBtn = document.getElementById('startBtn');
-    const startScreen = document.getElementById('startScreen');
-    const gameCanvas = document.getElementById('gameCanvas');
-    const resultScreen = document.getElementById('resultScreen');
-    const player = document.getElementById('player');
-    const scoreBoard = document.getElementById('scoreBoard');
-    const finalResult = document.getElementById('finalResult');
-    const avgResult = document.getElementById('avgResult');
+<script>
+const startBtn=document.getElementById('startBtn');
+const startScreen=document.getElementById('startScreen');
+const gameCanvas=document.getElementById('gameCanvas');
+const resultScreen=document.getElementById('resultScreen');
+const player=document.getElementById('player');
+const scoreBoard=document.getElementById('scoreBoard');
+const finalResult=document.getElementById('finalResult');
+const avgResult=document.getElementById('avgResult');
 
-    let score = 0;
-    let time = 30;
-    let timer, gameRunning = false;
+let score=0,time=30,timer,gameRunning=false;
 
-    startBtn.onclick = () => startGame();
+startBtn.onclick=()=>startGame();
 
-    function startGame() {
-      startScreen.style.display = 'none';
-      gameCanvas.style.display = 'block';
-      resultScreen.style.display = 'none';
-      score = 0; time = 30;
-      scoreBoard.innerText = `점수: ${score} | 시간: ${time}`;
-      gameRunning = true;
+function startGame(){
+  startScreen.style.display='none';
+  gameCanvas.style.display='block';
+  resultScreen.style.display='none';
+  score=0;time=30;
+  scoreBoard.innerText=`점수: ${score} | 시간: ${time}`;
+  gameRunning=true;
+  timer=setInterval(()=>{
+    time--;
+    scoreBoard.innerText=`점수: ${score} | 시간: ${time}`;
+    if(time<=0){
+      if(score>=50 && time>-5){time=10;}else{endGame();}
+    }
+  },1000);
+  randomSpawn();
+}
 
-      timer = setInterval(() => {
-        time--;
-        scoreBoard.innerText = `점수: ${score} | 시간: ${time}`;
-        if (time <= 0) {
-          if (score >= 50 && time > -5) {
-            time = 10; // 보너스 타임
-          } else {
-            endGame();
-          }
-        }
-      }, 1000);
+// 랜덤 간격으로 아이템 생성
+function randomSpawn(){
+  if(!gameRunning) return;
+  spawnItem();
+  setTimeout(randomSpawn, Math.random()*500+400);
+}
 
-      randomSpawn(); // 귤 생성 시작
+// 아이템 생성
+function spawnItem(){
+  if(!gameRunning) return;
+  const item=document.createElement('div');
+  item.classList.add('item');
+  const type=Math.random();
+  if(type<0.6){item.style.backgroundImage="url('https://cdn-icons-png.flaticon.com/512/2909/2909769.png')";item.dataset.type='normal';}
+  else if(type<0.85){item.style.backgroundImage="url('https://cdn-icons-png.flaticon.com/512/615/615075.png')";item.dataset.type='gold';}
+  else{item.style.backgroundImage="url('https://cdn-icons-png.flaticon.com/512/562/562619.png')";item.dataset.type='bomb';}
+  item.style.left=Math.random()*(window.innerWidth-50)+'px';
+  gameCanvas.appendChild(item);
+
+  let top=0;
+  const fall=setInterval(()=>{
+    if(!gameRunning){clearInterval(fall); return;}
+    top += 6;
+    item.style.top = top + 'px';
+
+    // 충돌 체크
+    const playerRect=player.getBoundingClientRect();
+    const itemRect=item.getBoundingClientRect();
+    if(itemRect.bottom >= playerRect.top && itemRect.top <= playerRect.bottom &&
+       itemRect.right >= playerRect.left && itemRect.left <= playerRect.right) {
+      if(item.dataset.type==='normal') score+=1;
+      else if(item.dataset.type==='gold') score+=2;
+      else if(item.dataset.type==='bomb') score=Math.floor(score/2);
+      scoreBoard.innerText=`점수: ${score} | 시간: ${time}`;
+      item.remove();
+      clearInterval(fall);
     }
 
-    // 랜덤 간격으로 아이템 생성
-    function randomSpawn() {
-      if (!gameRunning) return;
-      spawnItem();
-      setTimeout(randomSpawn, Math.random() * 500 + 400); // 0.4~0.9초 간격
-    }
+    // 화면 밖으로 나가면 제거
+    if(top > window.innerHeight){ item.remove(); clearInterval(fall);}
+  },30);
+}
 
-    // 아이템 생성
-    function spawnItem() {
-      if (!gameRunning) return;
-      const item = document.createElement('div');
-      item.classList.add('item');
-      const type = Math.random();
-      if (type < 0.6) {
-        item.style.backgroundImage = "url('https://cdn-icons-png.flaticon.com/512/2909/2909769.png')"; // 귤
-        item.dataset.type = 'normal';
-      } else if (type < 0.85) {
-        item.style.backgroundImage = "url('https://cdn-icons-png.flaticon.com/512/615/615075.png')"; // 황금귤
-        item.dataset.type = 'gold';
-      } else {
-        item.style.backgroundImage = "url('https://cdn-icons-png.flaticon.com/512/562/562619.png')"; // 폭탄
-        item.dataset.type = 'bomb';
-      }
-      item.style.left = Math.random() * (window.innerWidth - 50) + 'px';
-      gameCanvas.appendChild(item);
+// 터치 이동
+document.addEventListener('touchmove',(e)=>{
+  const touchX=e.touches[0].clientX;
+  player.style.left=Math.min(Math.max(touchX-40,0),window.innerWidth-80)+'px';
+});
 
-      let top = 0;
-      const fall = setInterval(() => {
-        if (!gameRunning) { clearInterval(fall); return; }
-        top += 6;
-        item.style.top = top + 'px';
-        if (top > window.innerHeight - 120) {
-          const playerRect = player.getBoundingClientRect();
-          const itemRect = item.getBoundingClientRect();
-          if (itemRect.left < playerRect.right && itemRect.right > playerRect.left) {
-            if (item.dataset.type === 'normal') score += 1;
-            else if (item.dataset.type === 'gold') score += 2;
-            else if (item.dataset.type === 'bomb') score = Math.floor(score / 2);
-            scoreBoard.innerText = `점수: ${score} | 시간: ${time}`;
-          }
-          item.remove();
-          clearInterval(fall);
-        }
-      }, 30);
-    }
+// 게임 종료
+function endGame(){
+  gameRunning=false;
+  clearInterval(timer);
+  gameCanvas.style.display='none';
+  resultScreen.style.display='flex';
+  let history=JSON.parse(localStorage.getItem('gameScores')||'[]');
+  history.push(score);
+  localStorage.setItem('gameScores',JSON.stringify(history));
+  const avgScore=history.reduce((a,b)=>a+b,0)/history.length;
+  const rate=Math.min(100,Math.floor((score/100)*73));
+  const avgRate=Math.min(100,Math.floor((avgScore/100)*73));
+  finalResult.innerText=`당신의 감귤학과 입학률은 ${rate}% 입니다! 🍊`;
+  avgResult.innerText=`현재 평균 입학률(누적 ${history.length}회): ${avgRate}%`;
+}
 
-    // 터치 이동
-    document.addEventListener('touchmove', (e) => {
-      const touchX = e.touches[0].clientX;
-      player.style.left = Math.min(Math.max(touchX - 40, 0), window.innerWidth - 80) + 'px';
-    });
-
-    // 게임 종료
-    function endGame() {
-      gameRunning = false;
-      clearInterval(timer);
-      gameCanvas.style.display = 'none';
-      resultScreen.style.display = 'flex';
-
-      // ✅ 점수 저장
-      let history = JSON.parse(localStorage.getItem('gameScores') || '[]');
-      history.push(score);
-      localStorage.setItem('gameScores', JSON.stringify(history));
-
-      // ✅ 평균 점수 기반 입학률 계산
-      const avgScore = history.reduce((a, b) => a + b, 0) / history.length;
-      const rate = Math.min(100, Math.floor((score / 100) * 73));
-      const avgRate = Math.min(100, Math.floor((avgScore / 100) * 73));
-
-      finalResult.innerText = `당신의 감귤학과 입학률은 ${rate}% 입니다! 🍊`;
-      avgResult.innerText = `현재 평균 입학률(누적 ${history.length}회): ${avgRate}%`;
-    }
-
-    function restartGame() {
-      resultScreen.style.display = 'none';
-      startScreen.style.display = 'flex';
-    }
-
-    function shareResult() {
-      alert("결과를 공유했습니다! (SNS API 연동 가능)");
-    }
-  </script>
+function restartGame(){resultScreen.style.display='none';startScreen.style.display='flex';}
+function shareResult(){alert("결과를 공유했습니다! (SNS API 연동 가능)");}
+</script>
 
 </body>
 </html>
