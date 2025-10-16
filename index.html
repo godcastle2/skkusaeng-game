@@ -5,313 +5,287 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>성균관대 감귤학과 입학률 테스트 🍊</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{overflow:hidden;font-family:'Arial',sans-serif;height:100vh;background:#000;}
-#gameCanvas{
-  position:relative;width:100%;height:100vh;overflow:hidden;
-  background-size:cover;background-position:center;
-}
-#player{
-  position:absolute;bottom:10%;left:45%;
-  width:12vw; max-width:80px; height:auto;
-  min-width:40px; min-height:40px;
-  background:url('backchar/char.png') no-repeat center/contain;
-  display:block;
-  z-index:10;
-}
-.item{
-  position:absolute;top:-50px;
-  width:10vw; max-width:50px; height:auto;
-  min-width:40px; min-height:40px;
-  background-size:contain;background-repeat:no-repeat;
-  display:block;
-  z-index:5;
-}
-#startScreen,#resultScreen{
-  position:absolute;top:0;left:0;width:100%;height:100%;
-  background-size:cover;display:flex;flex-direction:column;
-  justify-content:center;align-items:center;color:white;
-  text-align:center;text-shadow:0 2px 4px rgba(0,0,0,0.4);
-  z-index:100;
-}
-#startScreen h1,#resultScreen h1{font-size:6vw;line-height:1.4;margin-bottom:2vh;}
-#startScreen button,#resultScreen button{
-  background-color:#ff9800;border:none;color:white;padding:1.5vh 3vw;margin:1vh;
-  font-size:4vw;border-radius:1vw;box-shadow:0 0.5vh 1vh rgba(0,0,0,0.2);cursor:pointer;
-}
-#scoreBoard{position:absolute;top:1vh;left:2vw;font-size:4vw;color:#ff6f00;font-weight:bold; z-index:15;}
-#timerCanvas{position:absolute;top:1vh;right:2vw;width:10vw;height:10vw;max-width:50px;max-height:50px; z-index:15;}
-#goalMessage{
-  position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);
-  font-size:20vw;font-weight:900;color:#ff9800;
-  text-shadow:0 2px 6px rgba(0,0,0,0.7);display:none;
-  pointer-events:none; z-index:9999;
-}
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #000;
+    font-family: 'Pretendard', sans-serif;
+  }
+
+  #gameCanvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    background-color: black;
+  }
+
+  #startScreen, #resultScreen {
+    position: absolute;
+    inset: 0;
+    background: url('backchar/SKKUpaper.jpg') no-repeat center center/cover;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    text-shadow: 2px 2px 5px black;
+    z-index: 5;
+  }
+
+  h1 {
+    font-size: 2em;
+    margin-bottom: 1em;
+  }
+
+  .btn {
+    background-color: orange;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-size: 1.2em;
+    margin: 8px;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(255,165,0,0.6);
+  }
+
+  #countdown {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 8em;
+    font-weight: 900;
+    color: orange;
+    text-shadow: 3px 3px 10px black;
+    display: none;
+    z-index: 10;
+  }
+
+  #timerCanvas {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+  }
 </style>
 </head>
 <body>
 
 <div id="startScreen">
-  <h1>🍊 성균관대 감귤학과 <br> 입학률 테스트 🍊</h1>
-  <button id="startBtn">시작하기</button>
-  <button onclick="shareResult()">공유하기</button>
+  <h1>성균관대 감귤학과 입학률 테스트 🍊</h1>
+  <button class="btn" id="startBtn">시작하기</button>
 </div>
 
-<div id="gameCanvas" style="display:none;">
-  <div id="scoreBoard">점수: 0 | 시간: 30</div>
-  <canvas id="timerCanvas" width="50" height="50"></canvas>
-  <div id="player"></div>
-  <div id="goalMessage">3</div>
-</div>
+<canvas id="gameCanvas"></canvas>
+<canvas id="timerCanvas" width="100" height="100"></canvas>
+<div id="countdown">3</div>
 
-<div id="resultScreen" style="display:none; flex-direction:column;">
-  <h1>결과 발표 🎓</h1>
-  <p id="finalResult" style="color:#ff6f00;"></p>
-  <p id="avgResult" style="color:#ff9800;"></p>
-  <button onclick="restartGame()">다시하기</button>
-  <button onclick="shareResult()">결과 공유하기</button>
+<div id="resultScreen" style="display:none;">
+  <h1 id="resultText"></h1>
+  <button class="btn" id="restartBtn">다시하기</button>
 </div>
 
 <script>
-// ===========================
-// 1. 이미지 preload
-// ===========================
-const imageSources = [
-  'backchar/mandarin.png',
-  'backchar/gold_mandarin.png',
-  'backchar/Bomb.png',
-  'backchar/char.png',
-  'backchar/SKKUpaper.jpg'
-];
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-function preloadImages(sources, callback){
+const timerCanvas = document.getElementById('timerCanvas');
+const tctx = timerCanvas.getContext('2d');
+
+const startScreen = document.getElementById('startScreen');
+const countdownEl = document.getElementById('countdown');
+const resultScreen = document.getElementById('resultScreen');
+const resultText = document.getElementById('resultText');
+
+let charImg = new Image();
+let orangeImg = new Image();
+let bombImg = new Image();
+let bgImg = new Image();
+
+let character, oranges, bombs, score, timeLeft, gameRunning;
+
+// ✅ 이미지 미리 로딩
+function preloadImages(callback) {
   let loaded = 0;
-  for(let i=0;i<sources.length;i++){
-    const img = new Image();
-    img.src = sources[i];
-    img.onload = ()=>{
-      loaded++;
-      if(loaded===sources.length) callback();
-    }
-  }
+  const total = 4;
+  const checkLoaded = () => {
+    loaded++;
+    if (loaded === total) callback();
+  };
+  charImg.src = 'backchar/char.png';
+  orangeImg.src = 'backchar/mandarin.png';
+  bombImg.src = 'backchar/Bomb.png';
+  bgImg.src = 'backchar/SKKUpaper.jpg';
+
+  charImg.onload = checkLoaded;
+  orangeImg.onload = checkLoaded;
+  bombImg.onload = checkLoaded;
+  bgImg.onload = checkLoaded;
 }
 
-// ===========================
-// 2. DOM 요소
-// ===========================
-const startBtn=document.getElementById('startBtn');
-const startScreen=document.getElementById('startScreen');
-const gameCanvas=document.getElementById('gameCanvas');
-const resultScreen=document.getElementById('resultScreen');
-const player=document.getElementById('player');
-const scoreBoard=document.getElementById('scoreBoard');
-const finalResult=document.getElementById('finalResult');
-const avgResult=document.getElementById('avgResult');
-const timerCanvas=document.getElementById('timerCanvas');
-const ctx=timerCanvas.getContext('2d');
-const goalMessage=document.getElementById('goalMessage');
-
-let score=0,time=30,timer,gameRunning=false;
-
-// ===========================
-// 3. 배경 적용
-// ===========================
-let backgroundImageUrl = 'backchar/SKKUpaper.jpg';
-[startScreen, gameCanvas, resultScreen].forEach(el=>{
-  el.style.background = `url('${backgroundImageUrl}') center/cover no-repeat`;
-});
-
-// ===========================
-// 4. 게임 시작 (preload + 3·2·1)
-// ===========================
-preloadImages(imageSources, ()=>{
-  console.log('모든 이미지 로딩 완료');
-  startScreen.style.display = 'flex';
-});
-
-startBtn.onclick = ()=>{
-  startBtn.disabled = true;
-  startCountdown(startGame);
-}
-
-// 3·2·1 카운트
-function startCountdown(callback){
-  let count=3;
-  goalMessage.style.display='block';
-  goalMessage.innerText = count;
-  const cdInterval=setInterval(()=>{
+// ✅ 카운트다운
+function showCountdown(seconds, callback) {
+  let count = seconds;
+  countdownEl.textContent = count;
+  countdownEl.style.display = 'block';
+  const interval = setInterval(() => {
     count--;
-    if(count>0){
-      goalMessage.innerText = count;
-    } else{
-      clearInterval(cdInterval);
-      goalMessage.style.display='none';
+    if (count > 0) {
+      countdownEl.textContent = count;
+    } else {
+      clearInterval(interval);
+      countdownEl.style.display = 'none';
       callback();
     }
-  },1000);
+  }, 1000);
 }
 
-// ===========================
-// 5. 게임 시작
-// ===========================
-function startGame(){
-  startScreen.style.display='none';
-  gameCanvas.style.display='block';
-  resultScreen.style.display='none';
-  score=0; time=30;
-  scoreBoard.innerText=`점수: ${score} | 시간: ${time}`;
-  gameRunning=true;
-  drawTimer();
-  timer=setInterval(tick,1000);
-  randomSpawn();
+// ✅ 초기화
+function resetGame() {
+  character = { x: canvas.width / 2 - 50, y: canvas.height - 120, width: 100, height: 100 };
+  oranges = [];
+  bombs = [];
+  score = 0;
+  timeLeft = 30;
+  gameRunning = false;
 }
 
-function tick(){
-  if(!gameRunning) return;
-  time--;
-  scoreBoard.innerText=`점수: ${score} | 시간: ${time}`;
-  drawTimer();
-  if(time<=0){
-    if(score>=50){
-      gameRunning=false;
-      clearFruits();
-      goalMessage.innerText="목표 달성!";
-      goalMessage.style.display='block';
-      setTimeout(()=>{
-        startCountdown(()=>{
-          goalMessage.style.display='none';
-          time=10;
-          gameRunning=true;
-          randomSpawn();
-        });
-      },1000);
-    } else{
-      endGame();
+// ✅ 아이템 생성
+function spawnItem() {
+  if (!gameRunning) return;
+  const isOrange = Math.random() < 0.7;
+  const obj = {
+    x: Math.random() * (canvas.width - 50),
+    y: -50,
+    speed: isOrange ? 5 : 6,
+    type: isOrange ? 'orange' : 'bomb'
+  };
+  if (isOrange) oranges.push(obj);
+  else bombs.push(obj);
+  setTimeout(spawnItem, 600 + Math.random() * 400);
+}
+
+// ✅ 타이머
+function drawTimer() {
+  tctx.clearRect(0, 0, 100, 100);
+  const radius = 40;
+  const endAngle = (1 - timeLeft / 30) * 2 * Math.PI;
+
+  // 색상 채우기 (시계 방향)
+  tctx.beginPath();
+  tctx.arc(50, 50, radius, -Math.PI / 2, endAngle - Math.PI / 2, false);
+  tctx.strokeStyle = 'orange';
+  tctx.lineWidth = 8;
+  tctx.stroke();
+
+  // 시침 (반시계 방향)
+  const handAngle = -Math.PI / 2 - endAngle;
+  tctx.beginPath();
+  tctx.moveTo(50, 50);
+  tctx.lineTo(50 + radius * Math.cos(handAngle), 50 + radius * Math.sin(handAngle));
+  tctx.strokeStyle = '#fff';
+  tctx.lineWidth = 3;
+  tctx.stroke();
+
+  tctx.font = 'bold 16px sans-serif';
+  tctx.fillStyle = 'white';
+  tctx.textAlign = 'center';
+  tctx.fillText(`${timeLeft}s`, 50, 55);
+}
+
+// ✅ 게임 루프
+function gameLoop() {
+  if (!gameRunning) return;
+  ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+
+  // 귤
+  oranges.forEach(o => {
+    o.y += o.speed;
+    ctx.drawImage(orangeImg, o.x, o.y, 50, 50);
+    if (checkCollision(o, character)) {
+      score++;
+      o.y = canvas.height + 100;
     }
-  }
-}
+  });
 
-// ===========================
-// 6. 귤 생성
-// ===========================
-function randomSpawn(){
-  if(!gameRunning) return;
-  spawnItem();
-  setTimeout(randomSpawn, Math.random()*500+300);
-}
-
-function spawnItem(){
-  if(!gameRunning) return;
-  const item=document.createElement('div');
-  item.classList.add('item');
-  const type=Math.random();
-  let speed=6;
-  if(type<0.6){item.style.backgroundImage="url('backchar/mandarin.png')";item.dataset.type='normal'; speed=6;}
-  else if(type<0.85){item.style.backgroundImage="url('backchar/gold_mandarin.png')";item.dataset.type='gold'; speed=9;}
-  else{item.style.backgroundImage="url('backchar/Bomb.png')";item.dataset.type='bomb'; speed=6;}
-  item.style.left=Math.random()*(window.innerWidth-50)+'px';
-  gameCanvas.appendChild(item);
-
-  let top=0;
-  const fall=setInterval(()=>{
-    if(!gameRunning){clearInterval(fall); return;}
-    top += speed;
-    item.style.top = top + 'px';
-
-    const playerRect=player.getBoundingClientRect();
-    const itemRect=item.getBoundingClientRect();
-    if(itemRect.bottom >= playerRect.top && itemRect.top <= playerRect.bottom &&
-       itemRect.right >= playerRect.left && itemRect.left <= playerRect.right) {
-      if(item.dataset.type==='normal') score+=1;
-      else if(item.dataset.type==='gold') score+=2;
-      else if(item.dataset.type==='bomb') score=Math.floor(score/2);
-      scoreBoard.innerText=`점수: ${score} | 시간: ${time}`;
-      item.remove();
-      clearInterval(fall);
+  // 폭탄
+  bombs.forEach(b => {
+    b.y += b.speed;
+    ctx.drawImage(bombImg, b.x, b.y, 50, 50);
+    if (checkCollision(b, character)) {
+      score = Math.max(0, Math.floor(score / 2));
+      b.y = canvas.height + 100;
     }
+  });
 
-    if(top > window.innerHeight){ item.remove(); clearInterval(fall);}
-  },30);
+  oranges = oranges.filter(o => o.y < canvas.height);
+  bombs = bombs.filter(b => b.y < canvas.height);
+
+  ctx.drawImage(charImg, character.x, character.y, character.width, character.height);
+  drawTimer();
+
+  if (timeLeft > 0) requestAnimationFrame(gameLoop);
+  else endGame();
 }
 
-// ===========================
-// 7. 이전 귤 제거
-// ===========================
-function clearFruits(){ document.querySelectorAll('.item').forEach(item=>item.remove()); }
+// ✅ 충돌 판정
+function checkCollision(a, b) {
+  return (
+    a.x < b.x + b.width &&
+    a.x + 50 > b.x &&
+    a.y < b.y + b.height &&
+    a.y + 50 > b.y
+  );
+}
 
-// ===========================
-// 8. 캐릭터 터치 이동
-// ===========================
-document.addEventListener('touchmove',(e)=>{
-  const touchX=e.touches[0].clientX;
-  player.style.left=Math.min(Math.max(touchX - player.offsetWidth/2,0),window.innerWidth - player.offsetWidth)+'px';
+// ✅ 게임 시작
+function startGame() {
+  startScreen.style.display = 'none';
+  resetGame();
+  showCountdown(3, () => {
+    gameRunning = true;
+    spawnItem();
+    gameLoop();
+    const timer = setInterval(() => {
+      if (!gameRunning) {
+        clearInterval(timer);
+        return;
+      }
+      timeLeft--;
+    }, 1000);
+  });
+}
+
+// ✅ 게임 종료
+function endGame() {
+  gameRunning = false;
+  resultScreen.style.display = 'flex';
+  resultText.textContent = `🎓 당신의 감귤학과 입학률은 ${(score / 50 * 73).toFixed(1)}%입니다!`;
+}
+
+// ✅ 조작 (모바일 터치)
+document.addEventListener('touchmove', e => {
+  if (!character) return;
+  const touch = e.touches[0];
+  character.x = touch.clientX - character.width / 2;
 });
 
-// ===========================
-// 9. 타이머 시각화 (색칠 + 시침 일치)
-// ===========================
-function drawTimer(){
-  const radius=25;
-  ctx.clearRect(0,0,50,50);
-  const startAngle=-Math.PI/2;
-  const endAngle=startAngle + 2*Math.PI*((30 - time)/30);
+// ✅ 버튼 이벤트
+document.getElementById('startBtn').onclick = () => {
+  preloadImages(() => {
+    startGame();
+  });
+};
 
-  // 색칠
-  ctx.beginPath();
-  ctx.arc(radius,radius,radius-2,startAngle,endAngle);
-  ctx.strokeStyle='#ff6f00';
-  ctx.lineWidth=4;
-  ctx.stroke();
-
-  // 시침
-  const angle=startAngle + 2*Math.PI*((30 - time)/30);
-  ctx.beginPath();
-  ctx.moveTo(radius,radius);
-  ctx.lineTo(radius+Math.cos(angle)*(radius-5), radius+Math.sin(angle)*(radius-5));
-  ctx.strokeStyle='#ff3d00';
-  ctx.lineWidth=2;
-  ctx.stroke();
-}
-
-// ===========================
-// 10. 게임 종료
-// ===========================
-function endGame(){
-  gameRunning=false;
-  clearInterval(timer);
-  gameCanvas.style.display='none';
-  resultScreen.style.display='flex';
-  let history=JSON.parse(localStorage.getItem('gameScores')||'[]');
-  history.push(score);
-  localStorage.setItem('gameScores',JSON.stringify(history));
-  const avgScore=history.reduce((a,b)=>a+b,0)/history.length;
-  const rate=Math.min(100,Math.floor((score/100)*73));
-  const avgRate=Math.min(100,Math.floor((avgScore/100)*73));
-  finalResult.innerText=`당신의 감귤학과 입학률은 ${rate}% 입니다! 🍊`;
-  avgResult.innerText=`현재 평균 입학률(누적 ${history.length}회): ${avgRate}%`;
-}
-
-// ===========================
-// 11. 재시작 / 공유
-// ===========================
-function restartGame(){
-  resultScreen.style.display='none';
-  startScreen.style.display='flex';
-  startBtn.disabled = false;
-}
-
-function shareResult(){
-  const shareData = {
-    title: '성균관대 감귤학과 입학률 테스트 🍊',
-    text: `나의 감귤학과 점수: ${score}점! 🍊`,
-    url: window.location.href
-  }
-  if(navigator.share){
-    navigator.share(shareData).then(()=>console.log('공유 성공')).catch(err=>console.log('공유 실패', err));
-  } else {
-    prompt("링크를 복사해서 공유하세요:", window.location.href);
-  }
-}
+document.getElementById('restartBtn').onclick = () => {
+  resultScreen.style.display = 'none';
+  startGame();
+};
 </script>
+
 </body>
 </html>
