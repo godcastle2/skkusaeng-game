@@ -491,19 +491,39 @@ if(window.visualViewport){
   <script type="module">
   import { createClient } from "https://esm.sh/@supabase/supabase-js";
 
-  /** Supabase 대시보드 > Project Settings > API 에서 복사 */
-  const SUPABASE_URL  = "https://hpcaslhqpgxpvxhscjho.supabase.co";  // ← Supabase URL
-  const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwY2FzbGhxcGd4cHZ4aHNjamhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwNTQxMzcsImV4cCI6MjA3NzYzMDEzN30.2TgEEW9PKtoiDRylH8RaEFOWYbe5X_MujOeTo3o1AIw";
+  /** Supabase 대시보드 값으로 교체 */
+  const SUPABASE_URL  = "https://<프로젝트ID>.supabase.co";
+  const SUPABASE_ANON = "<anon public key>";
 
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-  /** 익명 세션 확보(INSERT 정책이 authenticated일 때 필요) */
+  /** 익명 세션(INSERT 정책이 authenticated일 때 필요) */
   await sb.auth.signInAnonymously().catch(()=>{});
 
-  /** 연결 확인 */
-  const { data, error } = await sb.from("submissions").select("*").limit(1);
+  /** 전역 저장 함수 노출: 학번→해시→attempts insert */
+  window.db = {
+    async saveAttempt(sid, score, durationMs){
+      // 1) 서버에서 학번 해시 생성
+      const { data: h, error: herr } = await sb.rpc("make_student_hash", { sid });
+      if (herr || !h) { console.log("해시 실패", herr); return; }
+
+      // 2) 모든 시도 기록 저장 (날짜는 DB가 자동 생성)
+      const { error: aerr } = await sb.from("attempts").insert([{
+        student_hash: h,
+        score,
+        duration_ms: durationMs ?? null   // duration_ms 컬럼을 만들었으면 값 전달, 없으면 null
+      }]);
+      if (aerr) { console.log("attempts 저장 실패", aerr); return; }
+
+      console.log("attempts 저장 완료");
+    }
+  };
+
+  // 연결 확인 로그(옵션)
+  const { data, error } = await sb.from("attempts").select("played_at").limit(1);
   console.log(error ? "연결 실패:" : "연결 성공:", error || data);
   </script>
+
 
   </body>
   </html>
