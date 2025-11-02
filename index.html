@@ -251,11 +251,11 @@ if(window.visualViewport){
     if(items.length >= MAX_ITEMS) return;
     const r = Math.random();
     if(r < 0.6){
-      items.push({ x: Math.random()*(W-52), y:-70, sz: Math.min(56, W*0.11), speed: 120 + Math.random()*40, type:'mandarin' });
+      items.push({ x: Math.random()*(W-52), y:-70, sz: Math.min(56, W*0.11), speed: 150 + Math.random()*80, type:'mandarin' });
     } else if(r < 0.8){
-      items.push({ x: Math.random()*(W-56), y:-70, sz: Math.min(60, W*0.12), speed: 170 + Math.random()*60, type:'gold' });
+      items.push({ x: Math.random()*(W-56), y:-70, sz: Math.min(60, W*0.12), speed: 200 + Math.random()*100, type:'gold' });
     } else {
-      items.push({ x: Math.random()*(W-52), y:-70, sz: Math.min(56, W*0.11), speed: 140 + Math.random()*50, type:'bomb' });
+      items.push({ x: Math.random()*(W-52), y:-70, sz: Math.min(56, W*0.11), speed: 170 + Math.random()*90, type:'bomb' });
     }
   }
 
