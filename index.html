@@ -177,6 +177,7 @@
   let spawnAcc = 0;
   let spawnInterval = 0.4; // avg seconds between spawns
   const MAX_ITEMS = 30;
+  let startedAtMs = 0;
 
   // 이미지 preload (Promise.all)
   function preloadImages() {
@@ -396,6 +397,9 @@ if(window.visualViewport){
     await showCenterMessage('3',700);
     await showCenterMessage('2',700);
     await showCenterMessage('1',700);
+    startedAtMs = Date.now();
+
+
     // small notice
     showSmallNotice('보너스 타임 시작!', 900);
     // start bonus
@@ -403,7 +407,10 @@ if(window.visualViewport){
     state = 'bonus_running';
     lastTs = 0;
     requestAnimationFrame(gameLoop);
-  }
+  }    // start running state
+    score = 0; timeLeft = 30; items.length = 0; spawnAcc = 0; lastTs = 0;
+    state = 'running';
+    requestAnimationFrame(gameLoop);
 
   // 결과 화면
   function showResult(){
