@@ -353,6 +353,7 @@ if(window.visualViewport){
         } else if(state === 'bonus_running'){
           state = 'result';
           showResult();
+
         }
       }
     }
@@ -413,6 +414,9 @@ if(window.visualViewport){
     const avg = hist.reduce((a,b)=>a+b,0)/hist.length;
     resultTitle.textContent = '결과 발표 🎓';
     resultText.textContent = `당신의 감귤학과 입학률은 ${Math.min(100, Math.round((score/50)*73*10)/10)}% 입니다! (누적 ${hist.length}회 평균 ${(Math.min(100, Math.round((avg/50)*73*10)/10))}%)`;
+    const durationMs = Math.max(0, Date.now() - startedAtMs);
+    if (window.db && studentId) window.db.saveAttempt(studentId, score, durationMs);
+
   }
 
   // show center message helper
@@ -496,9 +500,6 @@ if(window.visualViewport){
 
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-  // 익명 세션 확보 (Auth > Providers > Anonymous가 ON이어야 함)
-  await sb.auth.signInAnonymously().catch((e)=>console.log("익명 로그인 실패:", e));
-
   /** 전역 저장 함수: 학번→해시→attempts insert */
   window.db = {
     async saveAttempt(sid, score, durationMs){
@@ -520,6 +521,7 @@ if(window.visualViewport){
     }
   };
   </script>
+
 
   </html>
 
