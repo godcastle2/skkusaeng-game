@@ -251,11 +251,11 @@ if(window.visualViewport){
     if(items.length >= MAX_ITEMS) return;
     const r = Math.random();
     if(r < 0.6){
-      items.push({ x: Math.random()*(W-52), y:-70, sz: Math.min(56, W*0.11), speed: 150 + Math.random()*80, type:'mandarin' });
+      items.push({ x: Math.random()*(W-52), y:-70, sz: Math.min(56, W*0.11), speed: 250 + Math.random()*150, type:'mandarin' });
     } else if(r < 0.8){
-      items.push({ x: Math.random()*(W-56), y:-70, sz: Math.min(60, W*0.12), speed: 200 + Math.random()*100, type:'gold' });
+      items.push({ x: Math.random()*(W-56), y:-70, sz: Math.min(60, W*0.12), speed: 300 + Math.random()*170, type:'gold' });
     } else {
-      items.push({ x: Math.random()*(W-52), y:-70, sz: Math.min(56, W*0.11), speed: 170 + Math.random()*90, type:'bomb' });
+      items.push({ x: Math.random()*(W-52), y:-70, sz: Math.min(56, W*0.11), speed: 270 + Math.random()*160, type:'bomb' });
     }
   }
 
@@ -322,7 +322,7 @@ if(window.visualViewport){
       // update items
       for(let i=items.length-1;i>=0;i--){
         const it = items[i];
-        it.y += it.speed * dt;
+        it.y += it.speed * (dt+0.01);
         // collision with player rect
         const pRect = { x: player.x, y: player.y, w: player.w, h: player.h };
         if(collidesRect({x:it.x,y:it.y,sz:it.sz}, pRect)){
@@ -491,41 +491,36 @@ if(window.visualViewport){
   <script type="module">
   import { createClient } from "https://esm.sh/@supabase/supabase-js";
 
-  /** Supabase 대시보드 값으로 교체 */
   const SUPABASE_URL  = "https://hpcaslhqpgxpvxhscjho.supabase.co";
   const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwY2FzbGhxcGd4cHZ4aHNjamhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwNTQxMzcsImV4cCI6MjA3NzYzMDEzN30.2TgEEW9PKtoiDRylH8RaEFOWYbe5X_MujOeTo3o1AIw";
 
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-  /** 익명 세션(INSERT 정책이 authenticated일 때 필요) */
-  await sb.auth.signInAnonymously().catch(()=>{});
+  // 익명 세션 확보 (Auth > Providers > Anonymous가 ON이어야 함)
+  await sb.auth.signInAnonymously().catch((e)=>console.log("익명 로그인 실패:", e));
 
-  /** 전역 저장 함수 노출: 학번→해시→attempts insert */
+  /** 전역 저장 함수: 학번→해시→attempts insert */
   window.db = {
     async saveAttempt(sid, score, durationMs){
-      // 1) 서버에서 학번 해시 생성
-      const { data: h, error: herr } = await sb.rpc("make_student_hash", { sid });
-      if (herr || !h) { console.log("해시 실패", herr); return; }
+      try {
+        const { data: h, error: herr } = await sb.rpc("make_student_hash", { sid });
+        if (herr || !h) { console.log("해시 실패", herr); return; }
 
-      // 2) 모든 시도 기록 저장 (날짜는 DB가 자동 생성)
-      const { error: aerr } = await sb.from("attempts").insert([{
-        student_hash: h,
-        score,
-        duration_ms: durationMs ?? null   // duration_ms 컬럼을 만들었으면 값 전달, 없으면 null
-      }]);
-      if (aerr) { console.log("attempts 저장 실패", aerr); return; }
+        const { error: aerr } = await sb.from("attempts").insert([{
+          student_hash: h,
+          score,
+          duration_ms: durationMs ?? null
+        }]);
 
-      console.log("attempts 저장 완료");
+        if (aerr) { console.log("attempts 저장 실패", aerr); return; }
+        console.log("attempts 저장 완료");
+      } catch (e) {
+        console.log("예외 발생:", e);
+      }
     }
   };
-
-  // 연결 확인 로그(옵션)
-  const { data, error } = await sb.from("attempts").select("played_at").limit(1);
-  console.log(error ? "연결 실패:" : "연결 성공:", error || data);
   </script>
 
-
-  </body>
   </html>
 
 
