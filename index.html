@@ -38,6 +38,7 @@
     #intro p{font-size:3.4vw;color:#fff8e6;margin-bottom:2.2vh;line-height:1.4}
     .btn{pointer-events:auto;background:var(--orange);color:#111;border:none;padding:1.2vh 4vw;border-radius:1.2vw;font-size:4.2vw;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,0.4)}
     .btn:active{transform:translateY(2px)}
+    .btn[disabled]{opacity:.5;cursor:not-allowed;filter:grayscale(0.4)}
     #resultScreen{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:80;pointer-events:auto}
     #resultScreen .card{width:86%;max-width:720px;padding:3vh 3vw;background:linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.75));border-radius:14px;text-align:center}
     @media(min-width:800px){
@@ -74,9 +75,12 @@
             결과는 브라우저(로컬)에 저장됩니다.
           </p>
           <div style="display:flex;gap:12px;justify-content:center">
-            <button id="startBtn" class="btn">시작하기</button>
-            <button id="shareBtn" class="btn">공유하기</button>
-          </div>
+          <input id="sidInput" inputmode="numeric" pattern="[0-9]*" maxlength="10"
+                placeholder="학번 10자리" style="padding:8px;border-radius:8px;width:180px;color:#111">
+          <button id="startBtn" class="btn" disabled>시작하기</button>
+          <button id="shareBtn" class="btn">공유하기</button>
+        </div>
+        <div id="sidHint" style="margin-top:8px;font-size:12px;opacity:.8">숫자 10자리만 입력</div>
         </div>
       </div>
 
@@ -122,6 +126,31 @@
   const resultText = document.getElementById('resultText');
   const scoreEl = document.getElementById('score');
   const startBtn = document.getElementById('startBtn');
+  // ===== 학번 입력 상태 =====
+  let studentId = null;
+  const sidInput = document.getElementById('sidInput');
+  function normSID(raw){
+    if(!raw) return null;
+    const digits = String(raw).replace(/\D/g,'').slice(0,10);
+    return /^\d{10}$/.test(digits) ? digits : null;
+  }
+  sidInput?.addEventListener('input', ()=>{
+  const v = normSID(sidInput.value);
+  if(v){
+    studentId = v;
+    startBtn.disabled = false;
+    sidInput.style.outline = '2px solid #21c25e';  // 초록
+  }else{
+    studentId = null;
+    startBtn.disabled = true;
+    sidInput.style.outline = '2px solid #ff5252';  // 빨강
+  }
+  });
+  sidInput?.addEventListener('keypress', (e)=>{
+  if(!/[0-9]/.test(e.key)) e.preventDefault();
+  });
+  startBtn.disabled = true;
+
   const retryBtn = document.getElementById('retryBtn');
   const shareBtn = document.getElementById('shareBtn');
   const shareResultBtn = document.getElementById('shareResultBtn');
@@ -416,6 +445,8 @@ if(window.visualViewport){
 
   // Start button handler: big 3-2-1 with background maintained
   startBtn.addEventListener('click', async ()=>{
+    if(!studentId) return;  // 학번 미입력 시 시작 금지
+
     // hide intro overlay but keep background visible in canvas
     intro.style.display = 'none';
     // ensure canvas shows background
@@ -458,6 +489,7 @@ if(window.visualViewport){
   </script>
   </body>
   </html>
+
 
 
 
