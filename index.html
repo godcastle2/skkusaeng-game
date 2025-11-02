@@ -487,6 +487,24 @@ if(window.visualViewport){
   // resize init
   resize();
   </script>
+  <!-- 여기부터 추가 -->
+  <script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js";
+
+  /** Supabase 대시보드 > Project Settings > API 에서 복사 */
+  const SUPABASE_URL  = "https://hpcaslhqpgxpvxhscjho.supabase.co";  // ← Supabase URL
+  const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwY2FzbGhxcGd4cHZ4aHNjamhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwNTQxMzcsImV4cCI6MjA3NzYzMDEzN30.2TgEEW9PKtoiDRylH8RaEFOWYbe5X_MujOeTo3o1AIw";
+
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  /** 익명 세션 확보(INSERT 정책이 authenticated일 때 필요) */
+  await sb.auth.signInAnonymously().catch(()=>{});
+
+  /** 연결 확인 */
+  const { data, error } = await sb.from("submissions").select("*").limit(1);
+  console.log(error ? "연결 실패:" : "연결 성공:", error || data);
+  </script>
+
   </body>
   </html>
 
