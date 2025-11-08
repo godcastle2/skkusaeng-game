@@ -75,9 +75,7 @@
             결과는 브라우저(로컬)에 저장됩니다.
           </p>
           <div style="display:flex;gap:12px;justify-content:center">
-          <input id="sidInput" inputmode="numeric" pattern="[0-9]*" maxlength="10"
-                placeholder="학번 10자리" style="padding:8px;border-radius:8px;width:180px;color:#111">
-          <button id="startBtn" class="btn" disabled>시작하기</button>
+          <button id="startBtn" class="btn">시작하기</button>
           <button id="shareBtn" class="btn">공유하기</button>
         </div>
         <div id="sidHint" style="margin-top:8px;font-size:12px;opacity:.8">숫자 10자리만 입력</div>
@@ -126,31 +124,6 @@
   const resultText = document.getElementById('resultText');
   const scoreEl = document.getElementById('score');
   const startBtn = document.getElementById('startBtn');
-  // ===== 학번 입력 상태 =====
-  let studentId = null;
-  const sidInput = document.getElementById('sidInput');
-  function normSID(raw){
-    if(!raw) return null;
-    const digits = String(raw).replace(/\D/g,'').slice(0,10);
-    return /^\d{10}$/.test(digits) ? digits : null;
-  }
-  sidInput?.addEventListener('input', ()=>{
-  const v = normSID(sidInput.value);
-  if(v){
-    studentId = v;
-    startBtn.disabled = false;
-    sidInput.style.outline = '2px solid #21c25e';  // 초록
-  }else{
-    studentId = null;
-    startBtn.disabled = true;
-    sidInput.style.outline = '2px solid #ff5252';  // 빨강
-  }
-  });
-  sidInput?.addEventListener('keypress', (e)=>{
-  if(!/[0-9]/.test(e.key)) e.preventDefault();
-  });
-  startBtn.disabled = true;
-
   const retryBtn = document.getElementById('retryBtn');
   const shareBtn = document.getElementById('shareBtn');
   const shareResultBtn = document.getElementById('shareResultBtn');
@@ -174,10 +147,12 @@
   let score = 0;
   let timeLeft = 30; // seconds (current round; bonus uses 10)
   let lastTs = 0;
-  let spawnAcc = 0;
-  let spawnInterval = 0.4; // avg seconds between spawns
+
+  let nextSpawnAt = 0;                  // 초 단위 rAF 타임스탬프 기준
+  const SPAWN_MIN = 0.08, SPAWN_MAX = 0.35;  // 스폰 간격 범위(초)
+
   let startedAtMs = 0;
-  const MAX_ITEMS = 30;
+  const MAX_ITEMS = 60;
 
   window.startedAtMs = 0;
   // 이미지 preload (Promise.all)
@@ -197,6 +172,14 @@
       img.src = src[k];
     }));
     return Promise.all(promises).then(()=>{ loadedAll = true; loadingEl.style.display='none'; });
+  }
+  function randBetween(a,b){ return a + Math.random()*(b-a); }
+    function scheduleNextSpawn(nowSec){
+    const total = (state === 'bonus_running') ? 10 : 30;
+    const progress = 1 - Math.max(0, Math.min(1, timeLeft / total)); // 0→시작, 1→끝
+    const base = randBetween(SPAWN_MIN, SPAWN_MAX);
+    const factor = 1 - 0.6 * progress;              // 끝으로 갈수록 간격 40%까지 압축
+    nextSpawnAt = nowSec + Math.max(0.04, base * factor);
   }
 function resize() {
   const container = document.getElementById('container');
@@ -252,14 +235,28 @@ if(window.visualViewport){
   function spawnOne() {
     if(items.length >= MAX_ITEMS) return;
     const r = Math.random();
-    if(r < 0.6){
-      items.push({ x: Math.random()*(W-52), y:-70, sz: Math.min(56, W*0.11), speed: 250 + Math.random()*150, type:'mandarin' });
-    } else if(r < 0.8){
-      items.push({ x: Math.random()*(W-56), y:-70, sz: Math.min(60, W*0.12), speed: 300 + Math.random()*170, type:'gold' });
-    } else {
-      items.push({ x: Math.random()*(W-52), y:-70, sz: Math.min(56, W*0.11), speed: 270 + Math.random()*160, type:'bomb' });
-    }
+
+    // 진행률 (0~1) 계산: timeLeft가 줄어들수록 progress는 1에 가까움
+    const totalTime = (state === 'bonus_running') ? 10 : 30;
+    const progress = 1 - Math.max(0, Math.min(1, timeLeft / totalTime));
+    let speedMultiplier = 1 + 2.0 * progress + 1.2 * (progress * progress); // 비선형 가속
+    if (state === 'bonus_running') speedMultiplier *= 1.25;
+    let baseSpeed;
+    if(r < 0.6) baseSpeed = 250 + Math.random() * 150;       // 일반 귤
+    else if(r < 0.8) baseSpeed = 300 + Math.random() * 170;  // 황금 귤
+    else baseSpeed = 270 + Math.random() * 160;              // 폭탄
+
+    const speed = baseSpeed * speedMultiplier;
+
+    items.push({
+      x: Math.random() * (W - 52),
+      y: -70,
+      sz: Math.min(60, W * 0.12),
+      speed,
+      type: r < 0.6 ? 'mandarin' : (r < 0.8 ? 'gold' : 'bomb')
+    });
   }
+
 
   // 충돌 검사 (사각형)
   function collidesRect(a,b){
@@ -315,12 +312,19 @@ if(window.visualViewport){
 
     // Update only when running or bonus_running
     if(state === 'running' || state === 'bonus_running'){
-      spawnAcc += dt;
-      if(spawnAcc >= spawnInterval){
-        const reps = Math.floor(spawnAcc / spawnInterval);
-        for(let i=0;i<reps;i++) spawnOne();
-        spawnAcc = spawnAcc % spawnInterval;
-      }
+      const nowSec = ts/1000;
+    if(nowSec >= nextSpawnAt){
+      // 기본 1개 스폰
+      spawnOne();
+
+      // 드물게 1~2개 추가로 한 번에 떨어지는 버스트
+      if (Math.random() < 0.55) spawnOne();
+      if (Math.random() < 0.25) spawnOne();
+      if (Math.random() < 0.10) spawnOne();
+
+      scheduleNextSpawn(nowSec);
+    }
+
       // update items
       for(let i=items.length-1;i>=0;i--){
         const it = items[i];
@@ -408,23 +412,16 @@ if(window.visualViewport){
     state = 'bonus_running';
     lastTs = 0;
     requestAnimationFrame(gameLoop);
-  }    // start running state
-    score = 0; timeLeft = 30; items.length = 0; spawnAcc = 0; lastTs = 0;
-    state = 'running';
-    requestAnimationFrame(gameLoop);
-
+  }    
+    
   // 결과 화면
   function showResult(){
     resultScreen.style.display = 'flex';
-    const hist = JSON.parse(localStorage.getItem('gameScores')||'[]');
-    hist.push(score);
-    localStorage.setItem('gameScores', JSON.stringify(hist));
-    const avg = hist.reduce((a,b)=>a+b,0)/hist.length;
-    resultTitle.textContent = '결과 발표 🎓';
-    resultText.textContent = `당신의 감귤학과 입학률은 ${Math.min(100, Math.round((score/50)*73*10)/10)}% 입니다! (누적 ${hist.length}회 평균 ${(Math.min(100, Math.round((avg/50)*73*10)/10))}%)`;
-    const durationMs = Math.max(0, Date.now() - window.startedAtMs);
-    if (window.db && studentId) window.db.saveAttempt(studentId, score, durationMs);
 
+    const percent = Math.min(100, Math.round((score * 10 / 9) * 10) / 10);
+
+    resultTitle.textContent = '결과 발표 🎓';
+    resultText.textContent = `당신의 감귤학과 입학률은 ${percent}% 입니다! `;
   }
 
   // show center message helper
@@ -454,25 +451,24 @@ if(window.visualViewport){
     // draw background into canvas for intro backdrop (keeps background while countdown)
     if(images.bg) ctx.drawImage(images.bg,0,0,W,H);
   });
-
-  // Start button handler: big 3-2-1 with background maintained
-  startBtn.addEventListener('click', async ()=>{
-    if(!studentId) return;  // 학번 미입력 시 시작 금지
-
-    // hide intro overlay but keep background visible in canvas
+  // Start button: intro 닫고 카운트다운 후 시작
+  startBtn.addEventListener('click', async () => {
     intro.style.display = 'none';
-    // ensure canvas shows background
-    if(images.bg) ctx.drawImage(images.bg,0,0,W,H);
-    // do 3-2-1 (centered messages) then run
+    scheduleNextSpawn(performance.now()/1000);
+    const nowSec = performance.now()/1000;
+    scheduleNextSpawn(nowSec);
+
     await showCenterMessage('3',700);
     await showCenterMessage('2',700);
     await showCenterMessage('1',700);
-    await showCenterMessage('1',700);
-    window.startedAtMs = Date.now();   // 시작 시각 기록
-    score = 0; timeLeft = 30; items.length = 0; spawnAcc = 0; lastTs = 0;
+
+    window.startedAtMs = Date.now();
+    score = 0;
+    timeLeft = 30;
+    items.length = 0;
+    lastTs = 0;
     state = 'running';
     requestAnimationFrame(gameLoop);
-
   });
 
   // Retry
@@ -481,7 +477,7 @@ if(window.visualViewport){
     // reset and show countdown then start
     intro.style.display = 'none';
     showCenterMessage('3',700).then(()=>showCenterMessage('2',700)).then(()=>showCenterMessage('1',700)).then(()=>{
-      score = 0; timeLeft = 30; items.length = 0; spawnAcc = 0; lastTs = 0; state='running'; requestAnimationFrame(gameLoop);
+      score = 0; timeLeft = 30; items.length = 0; lastTs = 0; state='running'; requestAnimationFrame(gameLoop);
     });
   });
 
@@ -501,40 +497,9 @@ if(window.visualViewport){
   // resize init
   resize();
   </script>
-  <!-- 여기부터 추가 -->
-  <script type="module">
-  import { createClient } from "https://esm.sh/@supabase/supabase-js";
-
-  const SUPABASE_URL  = "https://hpcaslhqpgxpvxhscjho.supabase.co";
-  const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwY2FzbGhxcGd4cHZ4aHNjamhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwNTQxMzcsImV4cCI6MjA3NzYzMDEzN30.2TgEEW9PKtoiDRylH8RaEFOWYbe5X_MujOeTo3o1AIw";
-
-  const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
-
-  /** 전역 저장 함수: 학번→해시→attempts insert */
-  window.db = {
-    async saveAttempt(sid, score, durationMs){
-      try {
-        const { data: h, error: herr } = await sb.rpc("make_student_hash", { sid });
-        if (herr || !h) { console.log("해시 실패", herr); return; }
-
-        const { error: aerr } = await sb.from("attempts").insert([{
-          student_hash: h,
-          score,
-          duration_ms: durationMs ?? null
-        }]);
-
-        if (aerr) { console.log("attempts 저장 실패", aerr); return; }
-        console.log("attempts 저장 완료");
-      } catch (e) {
-        console.log("예외 발생:", e);
-      }
-    }
-  };
-  </script>
 
 
   </html>
-
 
 
 
