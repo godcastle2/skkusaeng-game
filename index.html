@@ -242,9 +242,9 @@ if(window.visualViewport){
     let speedMultiplier = 1 + 2.0 * progress + 1.2 * (progress * progress); // 비선형 가속
     if (state === 'bonus_running') speedMultiplier *= 1.25;
     let baseSpeed;
-    if(r < 0.6) baseSpeed = 250 + Math.random() * 150;       // 일반 귤
-    else if(r < 0.8) baseSpeed = 300 + Math.random() * 170;  // 황금 귤
-    else baseSpeed = 270 + Math.random() * 160;              // 폭탄
+    if(r < 0.6) baseSpeed = 100 + Math.random() * 130;       // 일반 귤
+    else if(r < 0.8) baseSpeed = 150 + Math.random() * 150;  // 황금 귤
+    else baseSpeed = 120 + Math.random() * 140;              // 폭탄
 
     const speed = baseSpeed * speedMultiplier;
 
@@ -253,7 +253,7 @@ if(window.visualViewport){
       y: -70,
       sz: Math.min(60, W * 0.12),
       speed,
-      type: r < 0.6 ? 'mandarin' : (r < 0.8 ? 'gold' : 'bomb')
+      type: r < 0.6 ? 'mandarin' : (r < 0.9 ? 'gold' : 'bomb')
     });
   }
 
