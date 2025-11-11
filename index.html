@@ -149,7 +149,7 @@
   let lastTs = 0;
 
   let nextSpawnAt = 0;                  // 초 단위 rAF 타임스탬프 기준
-  const SPAWN_MIN = 0.08, SPAWN_MAX = 0.35;  // 스폰 간격 범위(초)
+  const SPAWN_MIN = 0.1, SPAWN_MAX = 0.35;  // 스폰 간격 범위(초)
 
   let startedAtMs = 0;
   const MAX_ITEMS = 60;
@@ -253,7 +253,7 @@ if(window.visualViewport){
       y: -70,
       sz: Math.min(60, W * 0.12),
       speed,
-      type: r < 0.6 ? 'mandarin' : (r < 0.9 ? 'gold' : 'bomb')
+      type: r < 0.6 ? 'mandarin' : (r < 0.8 ? 'gold' : 'bomb')
     });
   }
 
@@ -500,6 +500,7 @@ if(window.visualViewport){
 
 
   </html>
+
 
 
 
