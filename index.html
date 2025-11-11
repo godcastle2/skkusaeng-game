@@ -242,7 +242,7 @@ if(window.visualViewport){
     let speedMultiplier = 1 + 2.0 * progress + 1.2 * (progress * progress); // 비선형 가속
     if (state === 'bonus_running') speedMultiplier *= 1.25;
     let baseSpeed;
-    if(r < 0.6) baseSpeed = 100 + Math.random() * 130;       // 일반 귤
+    if(r < 0.6) baseSpeed = 130 + Math.random() * 130;       // 일반 귤
     else if(r < 0.8) baseSpeed = 150 + Math.random() * 150;  // 황금 귤
     else baseSpeed = 120 + Math.random() * 100;              // 폭탄
 
