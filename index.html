@@ -1,186 +1,186 @@
-
-  <!DOCTYPE html>
-  <html lang="ko">
-  <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0, user-scalable=no" />
-  <title>성균관대 감귤학과 입학률 테스트 🍊</title>
-  <style>
-    :root{--orange:#ff9800;--dark:#0b0b0f}
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%;background:var(--dark);font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",sans-serif;color:#fff}
-    #container{
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0, user-scalable=no" />
+<title>성균관대 감귤학과 입학률 테스트 🍊</title>
+<style>
+  :root{--orange:#ff9800;--dark:#0b0b0f}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--dark);font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans KR",sans-serif;color:#fff}
+  #container{
     position: relative;
     width: 100vw;
     height: 100vh;   /* fallback */
     height: 100svh;  /* modern browsers */
     touch-action: none;
     overscroll-behavior: none;
-    }
+  }
 
+  canvas#gameCanvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block;z-index:1}
+  /* Timer canvas */
+  canvas#timerCanvas{position:absolute;right:3vw;top:3vh;width:12vw;height:12vw;max-width:72px;max-height:72px;z-index:30}
+  /* Common UI layer */
+  #ui{position:absolute;inset:0;z-index:40;pointer-events:none}
+  #score{position:absolute;left:3vw;top:3vh;font-size:4.2vw;color:var(--orange);font-weight:700;z-index:41;pointer-events:none}
+  /* Big centered messages (countdown, goal, etc.) */
+  #bigMessage{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);font-size:18vw;font-weight:900;color:var(--orange);text-shadow:0 8px 30px rgba(0,0,0,0.7);z-index:60;display:none;pointer-events:none;text-align:center}
+  #smallNotice{position:absolute;left:50%;top:55%;transform:translateX(-50%);font-size:4.6vw;color:#fff;z-index:60;display:none;pointer-events:none;text-align:center}
+  #loading{position:absolute;left:50%;top:10%;transform:translateX(-50%);font-size:3.6vw;color:#fff;z-index:61}
+  /* Intro screen */
+  #intro{
+    position:absolute;inset:0;background:rgba(0,0,0,0.35);backdrop-filter:blur(2px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:70;pointer-events:auto;
+  }
+  #intro .card{width:86%;max-width:920px;padding:4vh 4vw;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.2));border-radius:18px;text-align:center}
+  #intro h1{font-size:6.2vw;color:var(--orange);margin-bottom:1vh}
+  #intro p{font-size:3.4vw;color:#fff8e6;margin-bottom:2.2vh;line-height:1.4}
+  .btn{pointer-events:auto;background:var(--orange);color:#111;border:none;padding:1.2vh 4vw;border-radius:1.2vw;font-size:4.2vw;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,0.4)}
+  .btn:active{transform:translateY(2px)}
+  .btn[disabled]{opacity:.5;cursor:not-allowed;filter:grayscale(0.4)}
+  #resultScreen{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:80;pointer-events:auto}
+  #resultScreen .card{width:86%;max-width:720px;padding:3vh 3vw;background:linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.75));border-radius:14px;text-align:center}
+  @media(min-width:800px){
+    #intro h1{font-size:34px}
+    #intro p{font-size:18px}
+    .btn{font-size:16px}
+    #bigMessage{font-size:200px}
+    #score{font-size:20px}
+  }
+</style>
+</head>
+<body>
+<div id="container">
+  <!-- Game drawing canvas -->
+  <canvas id="gameCanvas"></canvas>
+  <!-- Timer UI -->
+  <canvas id="timerCanvas" width="100" height="100"></canvas>
 
-    canvas#gameCanvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block;z-index:1}
-    /* Timer canvas */
-    canvas#timerCanvas{position:absolute;right:3vw;top:3vh;width:12vw;height:12vw;max-width:72px;max-height:72px;z-index:30}
-    /* Common UI layer */
-    #ui{position:absolute;inset:0;z-index:40;pointer-events:none}
-    #score{position:absolute;left:3vw;top:3vh;font-size:4.2vw;color:var(--orange);font-weight:700;z-index:41;pointer-events:none}
-    /* Big centered messages (countdown, goal, etc.) */
-    #bigMessage{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);font-size:18vw;font-weight:900;color:var(--orange);text-shadow:0 8px 30px rgba(0,0,0,0.7);z-index:60;display:none;pointer-events:none;text-align:center}
-    #smallNotice{position:absolute;left:50%;top:55%;transform:translateX(-50%);font-size:4.6vw;color:#fff;z-index:60;display:none;pointer-events:none;text-align:center}
-    #loading{position:absolute;left:50%;top:10%;transform:translateX(-50%);font-size:3.6vw;color:#fff;z-index:61}
-    /* Intro screen */
-    #intro{
-      position:absolute;inset:0;background:rgba(0,0,0,0.35);backdrop-filter:blur(2px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:70;pointer-events:auto;
-    }
-    #intro .card{width:86%;max-width:920px;padding:4vh 4vw;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.2));border-radius:18px;text-align:center}
-    #intro h1{font-size:6.2vw;color:var(--orange);margin-bottom:1vh}
-    #intro p{font-size:3.4vw;color:#fff8e6;margin-bottom:2.2vh;line-height:1.4}
-    .btn{pointer-events:auto;background:var(--orange);color:#111;border:none;padding:1.2vh 4vw;border-radius:1.2vw;font-size:4.2vw;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,0.4)}
-    .btn:active{transform:translateY(2px)}
-    .btn[disabled]{opacity:.5;cursor:not-allowed;filter:grayscale(0.4)}
-    #resultScreen{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:80;pointer-events:auto}
-    #resultScreen .card{width:86%;max-width:720px;padding:3vh 3vw;background:linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.75));border-radius:14px;text-align:center}
-    @media(min-width:800px){
-      #intro h1{font-size:34px}
-      #intro p{font-size:18px}
-      .btn{font-size:16px}
-      #bigMessage{font-size:200px}
-      #score{font-size:20px}
-    }
-  </style>
-  </head>
-  <body>
-  <div id="container">
-    <!-- Game drawing canvas -->
-    <canvas id="gameCanvas"></canvas>
-    <!-- Timer UI -->
-    <canvas id="timerCanvas" width="100" height="100"></canvas>
+  <!-- UI layer -->
+  <div id="ui">
+    <div id="score">점수: 0 | 시간: 30</div>
+    <div id="bigMessage">3</div>
+    <div id="smallNotice"></div>
+    <div id="loading">로딩 중…</div>
 
-    <!-- UI layer -->
-    <div id="ui">
-      <div id="score">점수: 0 | 시간: 30</div>
-      <div id="bigMessage">3</div>
-      <div id="smallNotice"></div>
-      <div id="loading">로딩 중…</div>
-
-      <!-- Intro screen (background image applied via JS/canvas too) -->
-      <div id="intro">
-        <div class="card">
-          <h1>성균관대 감귤학과 <br> 입학률 테스트 🍊</h1>
-          <p>
-            🍊 떨어지는 귤을 잡고 폭탄을 피하세요!<br>
-            🍊 일반 귤 1점 · 황금 귤 2점 · 폭탄은 점수 반으로 감소<br>
-            🎯 30초 기본 라운드, 50점 이상이면 10초 보너스 타임!<br>
-            결과는 브라우저(로컬)에 저장됩니다.
-          </p>
-          <div style="display:flex;gap:12px;justify-content:center">
+    <!-- Intro screen (background image applied via JS/canvas too) -->
+    <div id="intro">
+      <div class="card">
+        <h1>성균관대 감귤학과 <br> 입학률 테스트 🍊</h1>
+        <p>
+          🍊 떨어지는 귤을 잡고 폭탄을 피하세요!<br>
+          🍊 일반 귤 1점 · 황금 귤 2점 · 폭탄은 점수 반으로 감소<br>
+          🎯 30초 동안 최대한 많은 점수를 얻어보세요!<br>
+        </p>
+        <div style="display:flex;gap:12px;justify-content:center">
           <button id="startBtn" class="btn">시작하기</button>
           <button id="shareBtn" class="btn">공유하기</button>
         </div>
-        <div id="sidHint" style="margin-top:8px;font-size:12px;opacity:.8">숫자 10자리만 입력</div>
-        </div>
       </div>
+    </div>
 
-      <!-- Result screen -->
-      <div id="resultScreen">
-        <div class="card">
-          <h2 id="resultTitle">결과 발표</h2>
-          <p id="resultText" style="
-            font-size:3.6vw;      /* 글씨 크기 조금 줄임 */
-            font-weight:800;       /* 글씨 두껍게 */
-            line-height:1.3;       /* 줄 간격 조절 */
-            color:var(--orange);
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* 가독성 위해 그림자 추가 */
-            margin:2vh 0;
-          "></p>
-          <div style="display:flex;gap:10px;justify-content:center;margin-top:2vh">
-            <button id="retryBtn" class="btn">다시하기</button>
-            <button id="shareResultBtn" class="btn">결과 공유</button>
-          </div>
+    <!-- Result screen -->
+    <div id="resultScreen">
+      <div class="card">
+        <h2 id="resultTitle">결과 발표</h2>
+        <p id="resultText" style="
+          font-size:3.6vw;      /* 글씨 크기 조금 줄임 */
+          font-weight:800;       /* 글씨 두껍게 */
+          line-height:1.3;       /* 줄 간격 조절 */
+          color:var(--orange);
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* 가독성 위해 그림자 추가 */
+          margin:2vh 0;
+        "></p>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:2vh">
+          <button id="retryBtn" class="btn">다시하기</button>
+          <button id="shareResultBtn" class="btn">결과 공유</button>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-  /* =========================
-    통합 게임 스크립트
-    - 이미지 는 backchar/ 폴더: mandarin.png, gold_mandarin.png, Bomb.png, char.png, SKKUpaper.jpg
-    - 실행: 로컬서버 권장 (python -m http.server 등)
-    ========================= */
+<script>
+/* =========================
+  통합 게임 스크립트 (보너스 타임 제거 버전)
+  - 이미지 는 backchar/ 폴더: mandarin.png, gold_mandarin.png, Bomb.png, char.png, SKKUpaper.jpg
+  - 실행: 로컬서버 권장 (python -m http.server 등)
+  ========================= */
 
-  // 캔버스/컨텍스트
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
-  const timerCanvas = document.getElementById('timerCanvas');
-  const tctx = timerCanvas.getContext('2d');
-  const loadingEl = document.getElementById('loading');
-  const bigMessage = document.getElementById('bigMessage');
-  const smallNotice = document.getElementById('smallNotice');
-  const intro = document.getElementById('intro');
-  const resultScreen = document.getElementById('resultScreen');
-  const resultTitle = document.getElementById('resultTitle');
-  const resultText = document.getElementById('resultText');
-  const scoreEl = document.getElementById('score');
-  const startBtn = document.getElementById('startBtn');
-  const retryBtn = document.getElementById('retryBtn');
-  const shareBtn = document.getElementById('shareBtn');
-  const shareResultBtn = document.getElementById('shareResultBtn');
+// 캔버스/컨텍스트
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const timerCanvas = document.getElementById('timerCanvas');
+const tctx = timerCanvas.getContext('2d');
+const loadingEl = document.getElementById('loading');
+const bigMessage = document.getElementById('bigMessage');
+const smallNotice = document.getElementById('smallNotice');
+const intro = document.getElementById('intro');
+const resultScreen = document.getElementById('resultScreen');
+const resultTitle = document.getElementById('resultTitle');
+const resultText = document.getElementById('resultText');
+const scoreEl = document.getElementById('score');
+const startBtn = document.getElementById('startBtn');
+const retryBtn = document.getElementById('retryBtn');
+const shareBtn = document.getElementById('shareBtn');
+const shareResultBtn = document.getElementById('shareResultBtn');
 
-  let W = window.innerWidth, H = window.innerHeight;
-  canvas.width = W; canvas.height = H;
-  timerCanvas.style.width = Math.min(72, W*0.12)+'px';
-  timerCanvas.style.height = Math.min(72, W*0.12)+'px';
+let W = window.innerWidth, H = window.innerHeight;
+canvas.width = W; canvas.height = H;
+timerCanvas.style.width = Math.min(72, W*0.12)+'px';
+timerCanvas.style.height = Math.min(72, W*0.12)+'px';
 
-  // 게임 상태 변수
-  let images = {};
-  let loadedAll = false;
-  let state = 'idle'; // idle, running, bonus_pending, bonus_countdown, bonus_running, result
-  let items = []; // {x,y,sz,speed,type}
-  let player = { 
-    x: W/2, 
-    y: H - H*0.18, 
-    w: Math.max(80, Math.min(120, W*0.2)), // 최소 80, 최대 120
-    h: Math.max(80, Math.min(120, W*0.2))  // 최소 80, 최대 120
+// 게임 상태 변수
+let images = {};
+let loadedAll = false;
+let state = 'idle'; // idle, running, result
+let items = []; // {x,y,sz,speed,type}
+let player = { 
+  x: W/2, 
+  y: H - H*0.18, 
+  w: Math.max(80, Math.min(120, W*0.2)), // 최소 80, 최대 120
+  h: Math.max(80, Math.min(120, W*0.2))  // 최소 80, 최대 120
+};
+let score = 0;
+let timeLeft = 30; // seconds
+let lastTs = 0;
+
+let nextSpawnAt = 0;                  // 초 단위 rAF 타임스탬프 기준
+const SPAWN_MIN = 0.08, SPAWN_MAX = 0.35;  // 스폰 간격 범위(초)
+
+let startedAtMs = 0;
+const MAX_ITEMS = 60;
+
+window.startedAtMs = 0;
+
+// 이미지 preload (Promise.all)
+function preloadImages() {
+  const src = {
+    mandarin: 'backchar/mandarin.png',
+    gold: 'backchar/gold_mandarin.png',
+    bomb: 'backchar/Bomb.png',
+    char: 'backchar/char.png',
+    bg: 'backchar/SKKUpaper.jpg'
   };
-  let score = 0;
-  let timeLeft = 30; // seconds (current round; bonus uses 10)
-  let lastTs = 0;
+  const keys = Object.keys(src);
+  const promises = keys.map(k => new Promise(resolve=>{
+    const img = new Image();
+    img.onload = ()=>{ images[k]=img; resolve(); };
+    img.onerror = ()=>{ console.warn('이미지 로드 실패:', src[k]); images[k]=null; resolve(); };
+    img.src = src[k];
+  }));
+  return Promise.all(promises).then(()=>{ loadedAll = true; loadingEl.style.display='none'; });
+}
 
-  let nextSpawnAt = 0;                  // 초 단위 rAF 타임스탬프 기준
-  const SPAWN_MIN = 0.08, SPAWN_MAX = 0.35;  // 스폰 간격 범위(초)
+function randBetween(a,b){ return a + Math.random()*(b-a); }
 
-  let startedAtMs = 0;
-  const MAX_ITEMS = 60;
+function scheduleNextSpawn(nowSec){
+  const total = 30;
+  const progress = 1 - Math.max(0, Math.min(1, timeLeft / total)); // 0→시작, 1→끝
+  const base = randBetween(SPAWN_MIN, SPAWN_MAX);
+  const factor = 1 - 0.6 * progress;              // 끝으로 갈수록 간격 40%까지 압축
+  nextSpawnAt = nowSec + Math.max(0.04, base * factor);
+}
 
-  window.startedAtMs = 0;
-  // 이미지 preload (Promise.all)
-  function preloadImages() {
-    const src = {
-      mandarin: 'backchar/mandarin.png',
-      gold: 'backchar/gold_mandarin.png',
-      bomb: 'backchar/Bomb.png',
-      char: 'backchar/char.png',
-      bg: 'backchar/SKKUpaper.jpg'
-    };
-    const keys = Object.keys(src);
-    const promises = keys.map(k => new Promise(resolve=>{
-      const img = new Image();
-      img.onload = ()=>{ images[k]=img; resolve(); };
-      img.onerror = ()=>{ console.warn('이미지 로드 실패:', src[k]); images[k]=null; resolve(); };
-      img.src = src[k];
-    }));
-    return Promise.all(promises).then(()=>{ loadedAll = true; loadingEl.style.display='none'; });
-  }
-  function randBetween(a,b){ return a + Math.random()*(b-a); }
-    function scheduleNextSpawn(nowSec){
-    const total = (state === 'bonus_running') ? 10 : 30;
-    const progress = 1 - Math.max(0, Math.min(1, timeLeft / total)); // 0→시작, 1→끝
-    const base = randBetween(SPAWN_MIN, SPAWN_MAX);
-    const factor = 1 - 0.6 * progress;              // 끝으로 갈수록 간격 40%까지 압축
-    nextSpawnAt = nowSec + Math.max(0.04, base * factor);
-  }
 function resize() {
   const container = document.getElementById('container');
 
@@ -200,7 +200,6 @@ function resize() {
   timerCanvas.style.height = Math.min(72, W * 0.12) + 'px';
 }
 
-
 // 초기 실행
 resize();
 
@@ -218,48 +217,42 @@ if(window.visualViewport){
   window.visualViewport.addEventListener('scroll', resizeHandler); // iOS Safari에서 스크롤도 높이 변화에 영향
 }
 
-  // 유틸: 큰 중앙 메시지 (Promise 기반)
-  function showCenterMessage(text, ms=700){
-    return new Promise(res=>{
-      bigMessage.textContent = text;
-      bigMessage.style.display = 'block';
-      setTimeout(()=>{ bigMessage.style.display='none'; res(); }, ms);
-    });
-  }
-  function showSmallNotice(text, ms=900){
-    smallNotice.textContent = text; smallNotice.style.display='block';
-    setTimeout(()=> smallNotice.style.display='none', ms);
-  }
+// 유틸: 큰 중앙 메시지 (Promise 기반)
+function showCenterMessage(text, ms=700){
+  return new Promise(res=>{
+    bigMessage.textContent = text;
+    bigMessage.style.display = 'block';
+    setTimeout(()=>{ bigMessage.style.display='none'; res(); }, ms);
+  });
+}
 
-  // 스폰
- // 스폰
+function showSmallNotice(text, ms=900){
+  smallNotice.textContent = text; smallNotice.style.display='block';
+  setTimeout(()=> smallNotice.style.display='none', ms);
+}
+
+// 스폰
 function spawnOne() {
   if (items.length >= MAX_ITEMS) return;
 
-  const isBonus = (state === 'bonus_running');
   const r = Math.random();
 
-  // 진행률에 따른 속도 가중치
-  const totalTime = isBonus ? 10 : 30;
+  // 진행률에 따른 속도 가중치 (항상 30초 기준)
+  const totalTime = 30;
   const progress = 1 - Math.max(0, Math.min(1, timeLeft / totalTime));
   let speedMultiplier = 1 + 2.0 * progress + 1.2 * (progress * progress);
-  if (isBonus) speedMultiplier *= 1.25;
 
-  // 타입 결정: 보너스 타임에는 폭탄 금지
+  // 타입 결정: 일반 60%, 황금 30%, 폭탄 10%
   let type;
-  if (isBonus) {
-    // 예: 일반 75%, 황금 25%
-    type = (r < 0.75) ? 'mandarin' : 'gold';
-  } else {
-    // 기존 확률: 일반 60%, 황금 30%, 폭탄 10%
-    type = (r < 0.6) ? 'mandarin' : (r < 0.9 ? 'gold' : 'bomb');
-  }
+  if (r < 0.6) type = 'mandarin';
+  else if (r < 0.9) type = 'gold';
+  else type = 'bomb';
 
   // 타입별 기본 속도
   let baseSpeed;
   if (type === 'mandarin') baseSpeed = 70 + Math.random() * 130;
   else if (type === 'gold') baseSpeed = 120 + Math.random() * 150;
-  else baseSpeed = 90 + Math.random() * 100; // bomb (보너스에선 안 옴)
+  else baseSpeed = 90 + Math.random() * 100; // bomb
 
   const speed = baseSpeed * speedMultiplier;
 
@@ -272,63 +265,60 @@ function spawnOne() {
   });
 }
 
+// 충돌 검사 (사각형)
+function collidesRect(a,b){
+  return !(a.x + a.sz < b.x || a.x > b.x + b.w || a.y + a.sz < b.y || a.y > b.y + b.h);
+}
 
+// 타이머 캔버스 그리기: progress 채우기(시계방향) + 시침(반시계)
+function drawTimerCanvas(){
+  const ctx = tctx;
+  ctx.clearRect(0,0,100,100);
+  const radius = 40;
+  const total = 30;
+  const progress = Math.max(0, Math.min(1, (total - timeLeft) / total ));
+  const startA = -Math.PI/2;
+  const endA = startA + 2*Math.PI*progress;
 
-  // 충돌 검사 (사각형)
-  function collidesRect(a,b){
-    return !(a.x + a.sz < b.x || a.x > b.x + b.w || a.y + a.sz < b.y || a.y > b.y + b.h);
-  }
+  // background ring
+  ctx.beginPath();
+  ctx.arc(50,50,radius,0,2*Math.PI);
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 8;
+  ctx.stroke();
 
-  // 타이머 캔버스 그리기: progress 채우기(시계방향) + 시침(반시계)
-  function drawTimerCanvas(){
-    const ctx = tctx;
-    ctx.clearRect(0,0,100,100);
-    const radius = 40;
-    // progress 기준: 기본 라운드(30s)일 때 (30 - timeLeft)/30
-    const total = (state==='bonus_running')?10:30;
-    const progress = Math.max(0, Math.min(1, (total - timeLeft) / total ));
-    const startA = -Math.PI/2;
-    const endA = startA + 2*Math.PI*progress;
+  // filled arc (clockwise)
+  ctx.beginPath();
+  ctx.arc(50,50,radius,startA,endA,false);
+  ctx.strokeStyle = 'orange';
+  ctx.lineWidth = 8;
+  ctx.stroke();
 
-    // background ring
-    ctx.beginPath();
-    ctx.arc(50,50,radius,0,2*Math.PI);
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-    ctx.lineWidth = 8;
-    ctx.stroke();
+  // hand
+  const handAngle = startA + 2*Math.PI*progress;
+  ctx.beginPath();
+  ctx.moveTo(50,50);
+  ctx.lineTo(50 + Math.cos(handAngle)*(radius-6), 50 + Math.sin(handAngle)*(radius-6));
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
 
-    // filled arc (clockwise)
-    ctx.beginPath();
-    ctx.arc(50,50,radius,startA,endA,false);
-    ctx.strokeStyle = 'orange';
-    ctx.lineWidth = 8;
-    ctx.stroke();
+  // seconds text
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`${Math.max(0,Math.ceil(timeLeft))}s`,50,50);
+}
 
-    // hand (counter-clockwise relative to progress)
-    const handAngle = startA + 2*Math.PI*progress;
-    ctx.beginPath();
-    ctx.moveTo(50,50);
-    ctx.lineTo(50 + Math.cos(handAngle)*(radius-6), 50 + Math.sin(handAngle)*(radius-6));
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+// 게임 루프 (rAF + delta time)
+function gameLoop(ts){
+  if(!lastTs) lastTs = ts;
+  const dt = (ts - lastTs)/1000; lastTs = ts;
 
-    // seconds text
-    ctx.font = 'bold 12px sans-serif';
-    ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(`${Math.max(0,Math.ceil(timeLeft))}s`,50,50);
-  }
-
-  // 게임 루프 (rAF + delta time)
-  function gameLoop(ts){
-    if(!lastTs) lastTs = ts;
-    const dt = (ts - lastTs)/1000; lastTs = ts;
-
-    // Update only when running or bonus_running
-    if(state === 'running' || state === 'bonus_running'){
-      const nowSec = ts/1000;
+  // Update only when running
+  if(state === 'running'){
+    const nowSec = ts/1000;
     if(nowSec >= nextSpawnAt){
       // 기본 1개 스폰
       spawnOne();
@@ -341,188 +331,137 @@ function spawnOne() {
       scheduleNextSpawn(nowSec);
     }
 
-      // update items
-      for(let i=items.length-1;i>=0;i--){
-        const it = items[i];
-        if (state === 'bonus_running' && it.type === 'bomb') {
-        it.type = (Math.random() < 0.75) ? 'mandarin' : 'gold';
-        }
+    // update items
+    for(let i=items.length-1;i>=0;i--){
+      const it = items[i];
 
-        it.y += it.speed * (dt+0.01);
-        // collision with player rect
-        const pRect = { x: player.x, y: player.y, w: player.w, h: player.h };
-        if(collidesRect({x:it.x,y:it.y,sz:it.sz}, pRect)){
-          if(it.type === 'mandarin') score += 1;
-          else if(it.type === 'gold') score += 2;
-          else if(it.type === 'bomb') score = Math.max(0, Math.floor(score/2));
-          items.splice(i,1);
-          continue;
-        }
-        // remove if out of screen
-        if(it.y > H + 120) items.splice(i,1);
+      it.y += it.speed * (dt+0.01);
+      // collision with player rect
+      const pRect = { x: player.x, y: player.y, w: player.w, h: player.h };
+      if(collidesRect({x:it.x,y:it.y,sz:it.sz}, pRect)){
+        if(it.type === 'mandarin') score += 1;
+        else if(it.type === 'gold') score += 2;
+        else if(it.type === 'bomb') score = Math.max(0, Math.floor(score/2));
+        items.splice(i,1);
+        continue;
       }
-      // time decrement
-      timeLeft -= dt;
-      if(timeLeft <= 0){
-        timeLeft = 0;
-        // decide next state
-        if(state === 'running'){
-          if(score >= 50){
-            // start bonus flow
-            state = 'bonus_pending';
-            // pause updates, kick off flow
-            bonusFlow();
-          } else {
-            state = 'result';
-            showResult();
-          }
-        } else if(state === 'bonus_running'){
-          state = 'result';
-          showResult();
-
-        }
-      }
+      // remove if out of screen
+      if(it.y > H + 120) items.splice(i,1);
     }
 
-    // Render
-    // background
-    if(images.bg) ctx.drawImage(images.bg, 0, 0, W, H);
-    else { ctx.fillStyle='#002'; ctx.fillRect(0,0,W,H); }
-
-    // draw items
-    for(const it of items){
-      const img = it.type==='mandarin'?images.mandarin : (it.type==='gold'?images.gold:images.bomb);
-      if(img) ctx.drawImage(img, it.x, it.y, it.sz, it.sz);
-      else {
-        ctx.fillStyle = it.type==='bomb'?'#222':'#ffa500';
-        ctx.fillRect(it.x,it.y,it.sz,it.sz);
-      }
+    // time decrement
+    timeLeft -= dt;
+    if(timeLeft <= 0){
+      timeLeft = 0;
+      state = 'result';
+      showResult();
     }
-
-    // draw player centered at player.x
-    if(images.char) ctx.drawImage(images.char, player.x, player.y, player.w, player.h);
-    else { ctx.fillStyle='#fff'; ctx.fillRect(player.x, player.y, player.w, player.h); }
-
-    // UI update
-    scoreEl.textContent = `점수: ${score} | 시간: ${Math.max(0,Math.ceil(timeLeft))}${state==='bonus_running'?' (보너스)':''}`;
-    drawTimerCanvas();
-
-    if(state !== 'result') requestAnimationFrame(gameLoop);
   }
 
-  // 보너스 전환 흐름: 목표달성 -> clear items -> 3-2-1 -> 보너스 실행
-  async function bonusFlow(){
-    // show 목표 달성
-    await showCenterMessage('목표 달성!', 1000);
-    // clear items
-    items.length = 0;
-    // short pause
-    await new Promise(r=>setTimeout(r,300));
-    // big 3-2-1
-    await showCenterMessage('3',700);
-    await showCenterMessage('2',700);
-    await showCenterMessage('1',700);
-    startedAtMs = Date.now();
+  // Render
+  // background
+  if(images.bg) ctx.drawImage(images.bg, 0, 0, W, H);
+  else { ctx.fillStyle='#002'; ctx.fillRect(0,0,W,H); }
 
-
-    // small notice
-    showSmallNotice('보너스 타임 시작!', 900);
-    // start bonus
-    timeLeft = 10;
-    state = 'bonus_running';
-    lastTs = 0;
-    requestAnimationFrame(gameLoop);
-  }    
-    
-  // 결과 화면
-  function showResult(){
-    resultScreen.style.display = 'flex';
-
-    const percent = Math.min(100, Math.round((score * 10 / 9) * 10) / 10);
-
-    resultTitle.textContent = '결과 발표 🎓';
-    resultText.textContent = `당신의 감귤학과 입학률은 ${percent}% 입니다! `;
+  // draw items
+  for(const it of items){
+    const img = it.type==='mandarin'?images.mandarin : (it.type==='gold'?images.gold:images.bomb);
+    if(img) ctx.drawImage(img, it.x, it.y, it.sz, it.sz);
+    else {
+      ctx.fillStyle = it.type==='bomb'?'#222':'#ffa500';
+      ctx.fillRect(it.x,it.y,it.sz,it.sz);
+    }
   }
 
-  // show center message helper
-  function showCenterMessage(text, ms=700){
-    return new Promise(res=>{
-      bigMessage.textContent = text;
-      bigMessage.style.display = 'block';
-      setTimeout(()=>{ bigMessage.style.display='none'; res(); }, ms);
+  // draw player
+  if(images.char) ctx.drawImage(images.char, player.x, player.y, player.w, player.h);
+  else { ctx.fillStyle='#fff'; ctx.fillRect(player.x, player.y, player.w, player.h); }
+
+  // UI update
+  scoreEl.textContent = `점수: ${score} | 시간: ${Math.max(0,Math.ceil(timeLeft))}`;
+  drawTimerCanvas();
+
+  if(state !== 'result') requestAnimationFrame(gameLoop);
+}
+
+// 결과 화면
+function showResult(){
+  resultScreen.style.display = 'flex';
+
+  const percent = Math.min(100, Math.round((score * 10 / 9) * 10) / 10);
+
+  resultTitle.textContent = '결과 발표 🎓';
+  resultText.textContent = `당신의 감귤학과 입학률은 ${percent}% 입니다! `;
+}
+
+// input handling (mouse/touch) - player x control
+function setPlayerFromClientX(cx){
+  player.x = Math.max(0, Math.min(W - player.w, cx - player.w/2));
+}
+window.addEventListener('mousemove', e => { if(state!=='idle') setPlayerFromClientX(e.clientX); });
+// 플레이어 이동 + 화면 스크롤 방지
+window.addEventListener('touchmove', e => {
+  e.preventDefault();  // 스크롤 방지
+  if(e.touches && e.touches[0]) setPlayerFromClientX(e.touches[0].clientX);
+}, {passive:false});
+
+// Start sequence (preload -> show intro -> start button)
+preloadImages().then(()=> {
+  // hide loader, intro already visible
+  loadingEl.style.display = 'none';
+  // draw background into canvas for intro backdrop (keeps background while countdown)
+  if(images.bg) ctx.drawImage(images.bg,0,0,W,H);
+});
+// Start button: intro 닫고 카운트다운 후 시작
+startBtn.addEventListener('click', async () => {
+  intro.style.display = 'none';
+  scheduleNextSpawn(performance.now()/1000);
+
+  await showCenterMessage('3',700);
+  await showCenterMessage('2',700);
+  await showCenterMessage('1',700);
+
+  window.startedAtMs = Date.now();
+  score = 0;
+  timeLeft = 30;
+  items.length = 0;
+  lastTs = 0;
+  state = 'running';
+  requestAnimationFrame(gameLoop);
+});
+
+// Retry
+retryBtn.addEventListener('click', ()=>{
+  resultScreen.style.display = 'none';
+  intro.style.display = 'none';
+  showCenterMessage('3',700)
+    .then(()=>showCenterMessage('2',700))
+    .then(()=>showCenterMessage('1',700))
+    .then(()=>{
+      score = 0; 
+      timeLeft = 30; 
+      items.length = 0; 
+      lastTs = 0; 
+      state='running'; 
+      requestAnimationFrame(gameLoop);
     });
+});
+
+// Sharing
+function shareCurrent(){
+  const shareText = `나의 감귤 점수: ${score}점! 성균관대 감귤학과 입학률 테스트`;
+  const url = window.location.href;
+  if(navigator.share){
+    navigator.share({title:'감귤학과 입학률 테스트', text: shareText, url}).catch(()=>prompt('링크 복사:', url));
+  } else {
+    prompt('링크 복사:', url);
   }
+}
+shareBtn.addEventListener('click', shareCurrent);
+if(shareResultBtn) shareResultBtn.addEventListener('click', shareCurrent);
 
-  // input handling (mouse/touch) - player x control
-  function setPlayerFromClientX(cx){
-    player.x = Math.max(0, Math.min(W - player.w, cx - player.w/2));
-  }
-  window.addEventListener('mousemove', e => { if(state!=='idle') setPlayerFromClientX(e.clientX); });
-  // 플레이어 이동 + 화면 스크롤 방지
-  window.addEventListener('touchmove', e => {
-    e.preventDefault();  // 스크롤 방지
-    if(e.touches && e.touches[0]) setPlayerFromClientX(e.touches[0].clientX);
-  }, {passive:false});
-
-  // Start sequence (preload -> show intro -> start button)
-  preloadImages().then(()=> {
-    // hide loader, intro already visible
-    loadingEl.style.display = 'none';
-    // draw background into canvas for intro backdrop (keeps background while countdown)
-    if(images.bg) ctx.drawImage(images.bg,0,0,W,H);
-  });
-  // Start button: intro 닫고 카운트다운 후 시작
-  startBtn.addEventListener('click', async () => {
-    intro.style.display = 'none';
-    scheduleNextSpawn(performance.now()/1000);
-    const nowSec = performance.now()/1000;
-    scheduleNextSpawn(nowSec);
-
-    await showCenterMessage('3',700);
-    await showCenterMessage('2',700);
-    await showCenterMessage('1',700);
-
-    window.startedAtMs = Date.now();
-    score = 0;
-    timeLeft = 30;
-    items.length = 0;
-    lastTs = 0;
-    state = 'running';
-    requestAnimationFrame(gameLoop);
-  });
-
-  // Retry
-  retryBtn.addEventListener('click', ()=>{
-    resultScreen.style.display = 'none';
-    // reset and show countdown then start
-    intro.style.display = 'none';
-    showCenterMessage('3',700).then(()=>showCenterMessage('2',700)).then(()=>showCenterMessage('1',700)).then(()=>{
-      score = 0; timeLeft = 30; items.length = 0; lastTs = 0; state='running'; requestAnimationFrame(gameLoop);
-    });
-  });
-
-  // Sharing
-  function shareCurrent(){
-    const shareText = `나의 감귤 점수: ${score}점! 성균관대 감귤학과 입학률 테스트`;
-    const url = window.location.href;
-    if(navigator.share){
-      navigator.share({title:'감귤학과 입학률 테스트', text: shareText, url}).catch(()=>prompt('링크 복사:', url));
-    } else {
-      prompt('링크 복사:', url);
-    }
-  }
-  shareBtn.addEventListener('click', shareCurrent);
-  if(shareResultBtn) shareResultBtn.addEventListener('click', shareCurrent);
-
-  // resize init
-  resize();
-  </script>
-
-
-  </html>
-
-
-
-
-
-
+// resize init
+resize();
+</script>
+</body>
+</html>
